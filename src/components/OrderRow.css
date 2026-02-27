@@ -1,0 +1,122 @@
+
+.order-row {
+  border-bottom: 1px solid #161616;
+  transition: background 0.15s;
+  animation: fadeUp 0.3s ease both;
+}
+
+.order-row:last-child { border-bottom: none; }
+.order-row:hover { background: #161616; }
+
+.order-row td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+/* ID */
+.order-row .td-id {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: #555;
+}
+
+/* Comprador */
+.order-row .td-buyer {
+  font-weight: 500;
+  color: #e8e8e8;
+}
+
+/* Monto */
+.order-row .td-amount {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: #e8e8e8;
+}
+
+/* Status ML */
+.order-row .td-status {}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.status-badge.paid        { background: #16a34a11; color: #16a34a; border-color: #16a34a; }
+.status-badge.confirmed   { background: #3b82f611; color: #3b82f6; border-color: #3b82f6; }
+.status-badge.cancelled   { background: #7f1d1d22; color: #f87171; border-color: #f87171; }
+.status-badge.other       { background: #1a1a1a;   color: #666;    border-color: #333;    }
+
+/* Picking status */
+.picking-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.picking-badge.pending  { background: #f59e0b11; color: #f59e0b; border-color: #f59e0b; }
+.picking-badge.scanned  { background: #3b82f611; color: #3b82f6; border-color: #3b82f6; }
+.picking-badge.packed   { background: #16a34a11; color: #16a34a; border-color: #16a34a; }
+
+.badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Fecha */
+.order-row .td-date {
+  font-size: 13px;
+  color: #555;
+}
+
+/* Items thumbnail */
+.td-items {
+  display: flex;
+  gap: -4px;
+}
+
+.item-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #222;
+  background: #1a1a1a;
+  margin-right: -6px;
+}
+
+.item-thumb-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: #1a1a1a;
+  border: 1px solid #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #444;
+  margin-right: -6px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

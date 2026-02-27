@@ -1,0 +1,200 @@
+/* ── Card ── */
+.order-card {
+  background: #111;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  padding: 24px;
+  animation: fadeUp 0.35s ease;
+}
+
+/* ── Card Header ── */
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.order-card-id {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.order-card-buyer {
+  font-size: 20px;
+  font-weight: 500;
+  color: #e8e8e8;
+}
+
+.order-card-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.order-card-badge.pending { background: #f59e0b11; color: #f59e0b; border-color: #f59e0b; }
+.order-card-badge.scanned { background: #3b82f611; color: #3b82f6; border-color: #3b82f6; }
+.order-card-badge.packed  { background: #16a34a11; color: #16a34a; border-color: #16a34a; }
+
+/* ── Divider ── */
+.order-card-divider {
+  height: 1px;
+  background: #1f1f1f;
+  margin-bottom: 20px;
+}
+
+/* ── Items ── */
+.order-card-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.order-item-row {
+  display: flex;
+  gap: 16px;
+  background: #0d0d0d;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #1a1a1a;
+  transition: border-color 0.2s;
+}
+
+.order-item-row:hover { border-color: #2a2a2a; }
+
+/* Imagen */
+.order-item-img-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.order-item-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #1a1a1a;
+  display: block;
+}
+
+.order-item-img-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  background: #1a1a1a;
+  border: 1px dashed #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-item-qty {
+  position: absolute;
+  bottom: -7px;
+  right: -7px;
+  background: #f59e0b;
+  color: #000;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Info */
+.order-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.order-item-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e8e8e8;
+  line-height: 1.3;
+  /* Truncar si es muy largo */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.order-item-variation {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+  background: #1a1a1a;
+  padding: 4px 10px;
+  border-radius: 4px;
+  align-self: flex-start;
+  border: 1px solid #2a2a2a;
+}
+
+/* ── Action row ── */
+.order-card-action {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.order-pack-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 28px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.order-pack-btn:hover   { opacity: 0.9; transform: translateY(-1px); }
+.order-pack-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── Packed confirmation ── */
+.order-packed-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #16a34a;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+  animation: fadeUp 0.3s ease;
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .order-card { padding: 16px; }
+
+  .order-item-img,
+  .order-item-img-placeholder { width: 64px; height: 64px; }
+
+  .order-card-buyer { font-size: 17px; }
+
+  .order-pack-btn { width: 100%; justify-content: center; }
+
+  .order-card-action { justify-content: stretch; }
+}
