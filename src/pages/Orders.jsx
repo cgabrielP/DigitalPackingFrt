@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import OrderTable from '../components/OrderTable'
-import { logout } from '../utils/auth'
+import Header from '../components/Header'
 import './Orders.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -11,21 +10,41 @@ const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem('app_token')}`,
 })
 
-const FILTERS = [
-  { key: 'all',     label: 'TODAS',     color: '#fff'    },
-  { key: 'pending', label: 'PENDIENTE', color: '#f59e0b' },
-  { key: 'scanned', label: 'ESCANEADO', color: '#3b82f6' },
-  { key: 'packed',  label: 'EMPACADO',  color: '#16a34a' },
+const STATUS_FILTERS = [
+  { key: 'all',     label: 'TODAS',     color: null        },
+  { key: 'pending', label: 'PENDIENTE', color: '#f59e0b'   },
+  { key: 'scanned', label: 'ESCANEADO', color: '#3b82f6'   },
+  { key: 'packed',  label: 'EMPACADO',  color: '#16a34a'   },
+]
+
+const SHIPPING_FILTERS = [
+  { key: 'all',           label: 'TODOS'      },
+  { key: 'me2',           label: 'ME2'        },
+  { key: 'me1',           label: 'ME1'        },
+  { key: 'not_specified', label: 'SIN ENVÍO'  },
+  { key: 'pickup',        label: 'RETIRO'     },
 ]
 
 export default function Orders() {
-  const navigate = useNavigate()
-  const [orders, setOrders]   = useState([])
-  const [loading, setLoading] = useState(false)
-  const [syncing, setSyncing] = useState(false)
-  const [filter, setFilter]   = useState('all')
-  const [search, setSearch]   = useState('')
-  const [toast, setToast]     = useState(null)
+  const [orders,          setOrders]          = useState([])
+  const [loading,         setLoading]         = useState(false)
+  const [syncing,         setSyncing]         = useState(false)
+  const [statusFilter,    setStatusFilter]    = useState('all')
+  const [shippingFilter,  setShippingFilter]  = useState('all')
+  const [search,          setSearch]          = useState('')
+  const [toast,           setToast]           = useState(null)
+  const [theme,           setTheme]           = useState(() =>
+    localStorage.getItem('picking_theme') || 'light'
+  )
+
+  // Aplicar tema al root
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('picking_theme', theme)
+  }, [theme])
+
+  const toggleTheme = () =>
+    setTheme(t => (t === 'dark' ? 'light' : 'dark'))
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
@@ -39,7 +58,7 @@ export default function Orders() {
       if (res.status === 401) { logout(); return }
       const data = await res.json()
       setOrders(data)
-    } catch (err) {
+    } catch {
       showToast('Error cargando órdenes', 'error')
     } finally {
       setLoading(false)
@@ -73,66 +92,54 @@ export default function Orders() {
     packed:  orders.filter(o => o.pickingStatus === 'packed').length,
   }), [orders])
 
-  // Filtrado + búsqueda
+  // Conteo de envíos para badges
+  const shippingCounts = useMemo(() => {
+    const counts = {}
+    SHIPPING_FILTERS.forEach(f => {
+      if (f.key !== 'all') {
+        counts[f.key] = orders.filter(o =>
+          (o.shippingType || 'not_specified').toLowerCase() === f.key
+        ).length
+      }
+    })
+    counts.all = orders.length
+    return counts
+  }, [orders])
+
+  // Filtrado + búsqueda combinados
   const filtered = useMemo(() => {
     return orders.filter(o => {
-      const matchFilter = filter === 'all' || o.pickingStatus === filter
-      const matchSearch = !search ||
+      const matchStatus   = statusFilter === 'all' || o.pickingStatus === statusFilter
+      const matchShipping = shippingFilter === 'all' ||
+        (o.shippingType || 'not_specified').toLowerCase() === shippingFilter
+      const matchSearch   = !search ||
         o.id.toString().includes(search) ||
         o.buyerNickname?.toLowerCase().includes(search.toLowerCase())
-      return matchFilter && matchSearch
+      return matchStatus && matchShipping && matchSearch
     })
-  }, [orders, filter, search])
+  }, [orders, statusFilter, shippingFilter, search])
 
   return (
     <div className="orders-root">
       <div className="orders-bg-grid" />
 
-      {/* Header */}
-      <header className="orders-header">
-        <div className="orders-header-left">
-          <span className="orders-logo">PICKING</span>
-          <span className="orders-logo-dot">●</span>
-          <span className="orders-logo-sub">SYSTEM</span>
-        </div>
-        <div className="orders-header-actions">
-          <button className="orders-nav-btn" onClick={() => navigate('/scan')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <rect x="3" y="7" width="3" height="10" rx="1"/>
-              <rect x="8" y="5" width="2" height="14" rx="1"/>
-              <rect x="12" y="7" width="4" height="10" rx="1"/>
-              <rect x="18" y="5" width="3" height="14" rx="1"/>
-            </svg>
-            <span>ESCANEAR</span>
-          </button>
-          <button className="orders-sync-btn" onClick={handleSync} disabled={syncing}>
-            {syncing ? (
-              <span className="spinner-small" />
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M23 4v6h-6M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-              </svg>
-            )}
-            {syncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR'}
-          </button>
-          <button className="orders-nav-btn" onClick={logout}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
-            </svg>
-          </button>
-        </div>
-      </header>
+      {/* ── Header ── */}
+      <Header
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onSync={handleSync}
+        syncing={syncing}
+      />
 
       <main className="orders-main">
 
-        {/* Título */}
+        {/* ── Título ── */}
         <div className="orders-page-title">
           <h1>ÓRDENES</h1>
           <p>{orders.length} órdenes totales · Mercado Libre</p>
         </div>
 
-        {/* Stats */}
+        {/* ── Stats ── */}
         <div className="orders-stats">
           <div className="orders-stat-card">
             <span className="orders-stat-label">TOTAL</span>
@@ -152,8 +159,10 @@ export default function Orders() {
           </div>
         </div>
 
-        {/* Toolbar */}
+        {/* ── Toolbar ── */}
         <div className="orders-toolbar">
+
+          {/* Búsqueda */}
           <div className="orders-search-wrapper">
             <svg className="orders-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
@@ -165,32 +174,80 @@ export default function Orders() {
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
+            {search && (
+              <button className="orders-search-clear" onClick={() => setSearch('')} aria-label="Limpiar">
+                ×
+              </button>
+            )}
           </div>
 
-          <div className="orders-filters">
-            {FILTERS.map(f => (
-              <button
-                key={f.key}
-                className={`orders-filter-btn ${filter === f.key ? `active-${f.key}` : ''}`}
-                onClick={() => setFilter(f.key)}
-              >
-                {f.key !== 'all' && (
-                  <span className="filter-dot" style={{ background: f.color }} />
-                )}
-                {f.label}
-                {f.key !== 'all' && (
-                  <span>({stats[f.key]})</span>
-                )}
-              </button>
-            ))}
+          {/* Filtros de estado */}
+          <div className="orders-filter-group">
+            <span className="filter-group-label">ESTADO</span>
+            <div className="orders-filters-scroll">
+              {STATUS_FILTERS.map(f => (
+                <button
+                  key={f.key}
+                  className={`orders-filter-btn ${statusFilter === f.key ? `active-${f.key}` : ''}`}
+                  onClick={() => setStatusFilter(f.key)}
+                >
+                  {f.color && <span className="filter-dot" style={{ background: f.color }} />}
+                  {f.label}
+                  {f.key !== 'all' && (
+                    <span className="filter-count">({stats[f.key]})</span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Filtros de envío */}
+          <div className="orders-filter-group">
+            <span className="filter-group-label">ENVÍO</span>
+            <div className="orders-filters-scroll">
+              {SHIPPING_FILTERS.map(f => (
+                <button
+                  key={f.key}
+                  className={`orders-filter-btn shipping ${shippingFilter === f.key ? 'active-shipping' : ''}`}
+                  onClick={() => setShippingFilter(f.key)}
+                >
+                  {f.label}
+                  <span className="filter-count">({shippingCounts[f.key] ?? 0})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
 
-        {/* Tabla */}
+        {/* ── Resultado del filtro ── */}
+        {(statusFilter !== 'all' || shippingFilter !== 'all' || search) && (
+          <div className="orders-active-filters">
+            <span className="active-filters-info">
+              {filtered.length} resultado{filtered.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              className="active-filters-clear"
+              onClick={() => { setStatusFilter('all'); setShippingFilter('all'); setSearch('') }}
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        )}
+
+        {/* ── Tabla ── */}
         <div className="orders-table-wrapper">
           {loading ? (
             <div className="orders-empty">
-              <span className="spinner-small" style={{ width: 32, height: 32, borderWidth: 3 }} />
+              <span className="spinner-large" />
+              <p>CARGANDO</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="orders-empty">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <p>SIN RESULTADOS</p>
             </div>
           ) : (
             <OrderTable orders={filtered} />
@@ -199,7 +256,7 @@ export default function Orders() {
 
       </main>
 
-      {/* Toast */}
+      {/* ── Toast ── */}
       {toast && (
         <div className={`orders-toast ${toast.type}`}>
           {toast.msg}

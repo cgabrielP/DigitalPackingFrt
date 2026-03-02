@@ -1,0 +1,202 @@
+/* ══════════════════════════════════════════
+   HEADER  —  app-header
+   Los colores de iconos se pasan directamente
+   como prop `color` a cada componente lucide.
+   Este CSS solo maneja estructura y layout.
+══════════════════════════════════════════ */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 32px;
+  height: 60px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  left: 0;
+  /* fallback sólido sin color-mix */
+  background: var(--bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 100;
+  box-sizing: border-box;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+/* ── Logo ── */
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.app-logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 4px;
+}
+
+.app-logo-dot {
+  color: #f59e0b;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.app-logo-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+}
+
+/* ── Grupo de acciones ── */
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Botón cuadrado (tema + logout) ── */
+.app-header-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  line-height: 0;        /* elimina espacio fantasma de inline */
+  font-size: 0;          /* evita herencia tipográfica que desplaza SVG */
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.app-header-icon-btn svg {
+  display: block;        /* saca el SVG del flujo inline */
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.app-header-icon-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+.app-header-logout:hover {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+/* SVG global dentro de botones del header */
+.app-header-btn svg,
+.app-header-sync-btn svg {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* ── Botón con label (escanear) ── */
+.app-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 7px;
+  padding: 0 16px;
+  height: 36px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  /* el color del texto sigue al icono para coherencia */
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.app-header-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+/* ── Botón SINCRONIZAR ── */
+.app-header-sync-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f59e0b;
+  border: none;
+  border-radius: 7px;
+  padding: 0 18px;
+  height: 36px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #000;          /* siempre negro sobre amarillo */
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.app-header-sync-btn:hover:not(:disabled)  { opacity: 0.88; }
+.app-header-sync-btn:active:not(:disabled) { transform: scale(0.97); }
+.app-header-sync-btn:disabled              { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Animación spin para Loader2 ── */
+.spin {
+  animation: icon-spin 0.75s linear infinite;
+}
+
+@keyframes icon-spin {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+/* ════════════════════════════════
+   RESPONSIVE — TABLET (< 1024px)
+════════════════════════════════ */
+@media (max-width: 1023px) {
+  .app-header { padding: 0 24px; }
+}
+
+/* ════════════════════════════════
+   RESPONSIVE — MOBILE (< 540px)
+════════════════════════════════ */
+@media (max-width: 540px) {
+  .app-header   { padding: 0 16px; height: 54px; }
+  .app-logo     { font-size: 14px; letter-spacing: 3px; }
+  .app-logo-sub { display: none; }
+
+  /* Colapsar a solo icono */
+  .app-header-btn-label { display: none; }
+
+  .app-header-btn,
+  .app-header-sync-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+/* ════════════════════════════════
+   RESPONSIVE — SMALL (< 400px)
+════════════════════════════════ */
+@media (max-width: 400px) {
+  .app-header-actions { gap: 6px; }
+  .app-logo-dot       { display: none; }
+}
