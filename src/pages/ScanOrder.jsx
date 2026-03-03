@@ -62,9 +62,11 @@ export default function ScanOrder() {
   }
 
   const handlePack = async () => {
+    console.log(order.displayIdentifier);
+    
     if (!order) return
     try {
-      const res = await fetch(`${API_URL}/orders/pack/${order.id}`, {
+      const res = await fetch(`${API_URL}/orders/pack/${order.displayIdentifier}`, {
         method: 'POST',
         headers: getHeaders(),
       })

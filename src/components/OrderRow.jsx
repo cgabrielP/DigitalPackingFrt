@@ -1,7 +1,7 @@
 import './OrderRow.css'
 
 const STATUS_ML = {
-  paid:      { label: 'PAGADO',    cls: 'paid' },
+  paid: { label: 'PAGADO', cls: 'paid' },
   confirmed: { label: 'CONFIRMADO', cls: 'confirmed' },
   cancelled: { label: 'CANCELADO', cls: 'cancelled' },
 }
@@ -9,7 +9,7 @@ const STATUS_ML = {
 const STATUS_PICKING = {
   pending: { label: 'PENDIENTE', cls: 'pending' },
   scanned: { label: 'ESCANEADO', cls: 'scanned' },
-  packed:  { label: 'EMPACADO',  cls: 'packed' },
+  packed: { label: 'EMPACADO', cls: 'packed' },
 }
 
 const formatDate = (dateStr) => {
@@ -20,12 +20,15 @@ const formatDate = (dateStr) => {
 }
 
 const OrderRow = ({ order, index }) => {
-  const mlStatus   = STATUS_ML[order.status]      || { label: order.status?.toUpperCase() || '—', cls: 'other' }
+  const mlStatus = STATUS_ML[order.status] || { label: order.status?.toUpperCase() || '—', cls: 'other' }
   const pickStatus = STATUS_PICKING[order.pickingStatus] || { label: order.pickingStatus, cls: 'pending' }
 
   return (
     <tr className="order-row" style={{ animationDelay: `${index * 40}ms` }}>
-      <td className="td-id">#{order.id}</td>
+      <td className="td-id">
+        #{order.displayIdentifier}
+        
+      </td>
 
       <td className="td-buyer">{order.buyerNickname || '—'}</td>
 
