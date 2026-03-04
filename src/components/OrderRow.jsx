@@ -94,7 +94,7 @@ const OrderRow = ({ order, index }) => {
         </span>
       </td>
 
-      <td className="td-date">{formatDate(order.createdAt)}</td>
+      <td className="td-date">{formatDate(order.lastUpdatedAt)}</td>
     </tr>
   )
 }

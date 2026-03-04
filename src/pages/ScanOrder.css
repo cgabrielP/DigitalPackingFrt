@@ -1,7 +1,4 @@
-/* ScanOrder.css
-   Usa las mismas CSS vars que Orders.css / Header.css
-   No redeclara colores hardcodeados — todo via tokens.
-*/
+/* ScanOrder.css — usa los mismos tokens de Orders.css / Header.css */
 
 /* ── Root ── */
 .scan-root {
@@ -34,17 +31,65 @@
   z-index: 1;
 }
 
-/* ── Section label ── */
+/* ── Header de sección ── */
+.scan-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
 .scan-section-label {
   font-family: 'Space Mono', monospace;
   font-size: 11px;
   letter-spacing: 3px;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin: 0;
+}
+
+/* ── Indicador "LISTO / LEYENDO" ── */
+.scan-ready-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-faint);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-surface);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.scan-ready-indicator--active {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.scan-ready-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+/* Pulso animado cuando está leyendo */
+.scan-ready-indicator--active .scan-ready-dot {
+  animation: scan-pulse 0.6s ease infinite alternate;
+}
+
+@keyframes scan-pulse {
+  from { opacity: 1; transform: scale(1);    }
+  to   { opacity: 0.4; transform: scale(0.7); }
 }
 
 /* ── Form ── */
-.scan-form-section { margin-bottom: 24px; }
+.scan-form-section { margin-bottom: 8px; }
 
 .scan-form {
   display: flex;
@@ -63,6 +108,7 @@
   transform: translateY(-50%);
   color: var(--text-faint);
   pointer-events: none;
+  transition: color 0.2s;
 }
 
 .scan-input {
@@ -70,16 +116,49 @@
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: 8px;
-  padding: 14px 16px 14px 44px;
+  padding: 14px 36px 14px 44px;
   color: var(--input-color);
   font-size: 16px;
   font-family: 'Space Mono', monospace;
   outline: none;
-  transition: border-color 0.2s, background 0.25s;
+  transition: border-color 0.2s, background 0.25s, box-shadow 0.2s;
 }
 
-.scan-input:focus       { border-color: var(--input-focus); }
+.scan-input:focus {
+  border-color: var(--input-focus);
+}
+
+/* Borde amarillo cuando el scanner está leyendo */
+.scan-input--scanning {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+.scan-input--scanning + .scan-input-icon,
+.scan-input-wrapper:has(.scan-input--scanning) .scan-input-icon {
+  color: #f59e0b;
+}
+
 .scan-input::placeholder { color: var(--input-placeholder); }
+
+/* Botón × para limpiar el input */
+.scan-input-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.scan-input-clear:hover { color: var(--text-primary); }
 
 .scan-submit-btn {
   display: flex;
@@ -103,6 +182,15 @@
 .scan-submit-btn:hover:not(:disabled)  { opacity: 0.9; transform: translateY(-1px); }
 .scan-submit-btn:active:not(:disabled) { transform: scale(0.97); }
 .scan-submit-btn:disabled              { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+/* ── Hint ── */
+.scan-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 8px;
+  letter-spacing: 0.3px;
+  font-family: 'DM Sans', sans-serif;
+}
 
 /* ── Error ── */
 .scan-error {
@@ -175,4 +263,6 @@
     width: 100%;
     justify-content: center;
   }
+
+  .scan-hint { text-align: center; }
 }
