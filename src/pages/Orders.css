@@ -372,6 +372,9 @@
 /* ════════════════════════════════════════
    TABLA
 ════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   TABLE  (desktop-only)
+════════════════════════════════════════ */
 .orders-table-wrapper {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -408,13 +411,162 @@
 }
 
 .orders-table tbody tr:last-child { border-bottom: none; }
-
-.orders-table tbody tr:hover { background: var(--bg-elevated); }
+.orders-table tbody tr:hover      { background: var(--bg-elevated); }
 
 .orders-table tbody td {
   padding: 13px 20px;
   font-size: 13px;
   color: var(--text-primary);
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE VISIBILITY SWITCHES
+════════════════════════════════════════ */
+.orders-table-scroll--desktop { display: block; }
+.orders-cards--mobile         { display: none;  }
+
+@media (max-width: 768px) {
+  .orders-table-scroll--desktop { display: none;  }
+  .orders-cards--mobile         { display: flex; flex-direction: column; gap: 8px; }
+}
+
+/* ════════════════════════════════════════
+   MOBILE ACCORDION CARDS
+════════════════════════════════════════ */
+.ocard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ocard--open {
+  border-color: var(--accent, #4f8ef7);
+  box-shadow: 0 0 0 1px var(--accent, #4f8ef7);
+}
+
+/* ── Header row (always visible) ── */
+.ocard__header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+
+.ocard__header:hover { background: var(--bg-elevated); }
+
+.ocard__id {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.ocard__buyer {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ocard__total {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ocard__badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--bg-elevated);
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+}
+
+/* Status tints – add more as needed */
+.ocard__badge--paid      { color: #4ade80; border-color: #4ade8040; background: #4ade8012; }
+.ocard__badge--pending   { color: #facc15; border-color: #facc1540; background: #facc1512; }
+.ocard__badge--cancelled { color: #f87171; border-color: #f8717140; background: #f8717112; }
+.ocard__badge--shipped   { color: #60a5fa; border-color: #60a5fa40; background: #60a5fa12; }
+
+.ocard__chevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-faint);
+  transition: transform 0.25s cubic-bezier(.4, 0, .2, 1);
+  flex-shrink: 0;
+}
+
+.ocard--open .ocard__chevron { transform: rotate(180deg); }
+
+/* ── Expandable body ── */
+.ocard__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.ocard--open .ocard__body {
+  grid-template-rows: 1fr;
+}
+
+.ocard__body > * {
+  overflow: hidden;
+}
+
+.ocard__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  margin: 0;
+  padding: 0;
+}
+
+.ocard__field {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ocard__field:last-child,
+.ocard__field:nth-last-child(2):nth-child(odd) {
+  border-bottom: none;
+}
+
+/* Right-column fields get a left border */
+.ocard__field:nth-child(even) {
+  border-left: 1px solid var(--border);
+}
+
+.ocard__field dt {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-faint);
+  margin-bottom: 4px;
+}
+
+.ocard__field dd {
+  font-size: 12px;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 /* ════════════════════════════════════════
@@ -434,7 +586,6 @@
   font-size: 11px;
   letter-spacing: 3px;
 }
-
 /* ════════════════════════════════════════
    SPINNERS
 ════════════════════════════════════════ */

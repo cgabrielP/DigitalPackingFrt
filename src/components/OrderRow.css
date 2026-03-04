@@ -4,7 +4,9 @@
   transition: background 0.15s;
   animation: fadeUp 0.3s ease both;
 }
-
+.status-badge.ship-pending { background: rgba(245,158,11,0.08); color: #f59e0b; border-color: #f59e0b; }
+.status-badge.ship-transit { background: rgba(59,130,246,0.08); color: #3b82f6; border-color: #3b82f6; }
+.status-badge.ship-done    { background: rgba(22,163,74,0.08);  color: #16a34a; border-color: #16a34a; }
 .order-row:last-child { border-bottom: none; }
 .order-row:hover { background: #161616; }
 

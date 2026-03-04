@@ -1,15 +1,21 @@
 import './OrderRow.css'
 
 const STATUS_ML = {
-  paid: { label: 'PAGADO', cls: 'paid' },
+  paid:      { label: 'PAGADO',     cls: 'paid'      },
   confirmed: { label: 'CONFIRMADO', cls: 'confirmed' },
-  cancelled: { label: 'CANCELADO', cls: 'cancelled' },
+  cancelled: { label: 'CANCELADO',  cls: 'cancelled' },
 }
 
 const STATUS_PICKING = {
   pending: { label: 'PENDIENTE', cls: 'pending' },
   scanned: { label: 'ESCANEADO', cls: 'scanned' },
-  packed: { label: 'EMPACADO', cls: 'packed' },
+  packed:  { label: 'EMPACADO',  cls: 'packed'  },
+}
+
+const SHIPPING_CATEGORY = {
+  por_despachar: { label: 'POR DESPACHAR', cls: 'ship-pending' },
+  en_transito:   { label: 'EN TRÁNSITO',   cls: 'ship-transit' },
+  finalizados:   { label: 'FINALIZADO',    cls: 'ship-done'    },
 }
 
 const formatDate = (dateStr) => {
@@ -20,15 +26,14 @@ const formatDate = (dateStr) => {
 }
 
 const OrderRow = ({ order, index }) => {
-  const mlStatus = STATUS_ML[order.status] || { label: order.status?.toUpperCase() || '—', cls: 'other' }
+  const mlStatus   = STATUS_ML[order.status]            || { label: order.status?.toUpperCase() || '—', cls: 'other' }
   const pickStatus = STATUS_PICKING[order.pickingStatus] || { label: order.pickingStatus, cls: 'pending' }
+  const shipCat    = SHIPPING_CATEGORY[order.shippingCategory]
 
   return (
     <tr className="order-row" style={{ animationDelay: `${index * 40}ms` }}>
-      <td className="td-id">
-        #{order.displayIdentifier}
-        
-      </td>
+
+      <td className="td-id">#{order.displayIdentifier}</td>
 
       <td className="td-buyer">{order.buyerNickname || '—'}</td>
 
@@ -63,6 +68,7 @@ const OrderRow = ({ order, index }) => {
         </div>
       </td>
 
+      {/* Estado ML */}
       <td>
         <span className={`status-badge ${mlStatus.cls}`}>
           <span className="badge-dot" />
@@ -70,6 +76,17 @@ const OrderRow = ({ order, index }) => {
         </span>
       </td>
 
+      {/* Categoría de envío */}
+      <td>
+        {shipCat ? (
+          <span className={`status-badge ${shipCat.cls}`}>
+            <span className="badge-dot" />
+            {shipCat.label}
+          </span>
+        ) : '—'}
+      </td>
+
+      {/* Estado picking */}
       <td>
         <span className={`picking-badge ${pickStatus.cls}`}>
           <span className="badge-dot" />

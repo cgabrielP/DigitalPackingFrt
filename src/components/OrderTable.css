@@ -1,0 +1,291 @@
+/* ════════════════════════════════════════
+   TABLE WRAPPER
+════════════════════════════════════════ */
+.orders-table-wrapper {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: background 0.25s, border-color 0.25s;
+}
+
+.orders-table-scroll { overflow-x: auto; }
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table thead tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.orders-table thead th {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-faint);
+  text-align: left;
+  padding: 14px 20px;
+  white-space: nowrap;
+  background: var(--bg-elevated);
+}
+
+.orders-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.orders-table tbody tr:last-child { border-bottom: none; }
+.orders-table tbody tr:hover      { background: var(--bg-elevated); }
+
+.orders-table tbody td {
+  padding: 13px 20px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVE SWITCHES
+════════════════════════════════════════ */
+.orders-table-scroll--desktop { display: block; }
+.orders-cards--mobile         { display: none;  }
+
+@media (max-width: 768px) {
+  .orders-table-scroll--desktop { display: none;  }
+  .orders-cards--mobile         { display: flex; flex-direction: column; gap: 6px; }
+}
+
+/* ════════════════════════════════════════
+   MOBILE ACCORDION CARD
+════════════════════════════════════════ */
+.ocard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ocard--open {
+  border-color: color-mix(in srgb, var(--text-faint) 40%, transparent);
+}
+
+/* ── Header ── */
+.ocard__header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto 20px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+
+.ocard__header:hover  { background: var(--bg-elevated); }
+.ocard__header:active { background: var(--bg-elevated); }
+
+.ocard__id {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.ocard__buyer {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.ocard__total {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ocard__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  transition: transform 0.25s cubic-bezier(.4, 0, .2, 1);
+  flex-shrink: 0;
+}
+
+.ocard--open .ocard__chevron { transform: rotate(180deg); }
+
+/* ── Expand animation (no max-height needed) ── */
+.ocard__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s cubic-bezier(.4, 0, .2, 1);
+}
+
+.ocard--open .ocard__body { grid-template-rows: 1fr; }
+
+.ocard__body-inner {
+  overflow: hidden;
+  border-top: 0px solid var(--border);
+  transition: border-top-width 0s 0.28s;
+}
+
+.ocard--open .ocard__body-inner {
+  border-top-width: 1px;
+  transition: border-top-width 0s 0s;
+}
+
+/* ── Thumbnails row ── */
+.ocard__thumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Detail grid ── */
+.ocard__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+  padding: 0;
+}
+
+.ocard__field {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Right column gets a left border */
+.ocard__field:nth-child(even) {
+  border-left: 1px solid var(--border);
+}
+
+/* Full-width field */
+.ocard__field--full {
+  grid-column: 1 / -1;
+  border-left: none !important;
+}
+
+/* Remove bottom border from last row */
+.ocard__field:last-child,
+.ocard__field:nth-last-child(2):not(.ocard__field--full) {
+  border-bottom: none;
+}
+
+.ocard__field dt {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-faint);
+  margin-bottom: 5px;
+}
+
+.ocard__field dd {
+  font-size: 12px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ════════════════════════════════════════
+   SHARED BADGES  (used in both table & cards)
+   Keep in sync with OrderRow.css if separate
+════════════════════════════════════════ */
+.status-badge,
+.picking-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+/* Estado ML */
+.status-badge.paid      { color: #4ade80; background: #4ade8012; border-color: #4ade8030; }
+.status-badge.confirmed { color: #60a5fa; background: #60a5fa12; border-color: #60a5fa30; }
+.status-badge.cancelled { color: #f87171; background: #f8717112; border-color: #f8717130; }
+.status-badge.other     { color: var(--text-faint); background: var(--bg-elevated); border-color: var(--border); }
+
+/* Shipping */
+.status-badge.ship-pending { color: #facc15; background: #facc1512; border-color: #facc1530; }
+.status-badge.ship-transit { color: #a78bfa; background: #a78bfa12; border-color: #a78bfa30; }
+.status-badge.ship-done    { color: #34d399; background: #34d39912; border-color: #34d39930; }
+
+/* Picking */
+.picking-badge.pending { color: #facc15; background: #facc1512; border-color: #facc1530; }
+.picking-badge.scanned { color: #60a5fa; background: #60a5fa12; border-color: #60a5fa30; }
+.picking-badge.packed  { color: #4ade80; background: #4ade8012; border-color: #4ade8030; }
+
+/* ════════════════════════════════════════
+   PRODUCT THUMBNAILS  (shared)
+════════════════════════════════════════ */
+.td-items {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.item-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.item-thumb-placeholder {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: 'Space Mono', monospace;
+}
+
+/* ════════════════════════════════════════
+   EMPTY STATE
+════════════════════════════════════════ */
+.orders-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 80px 0;
+  color: var(--text-faint);
+}
+
+.orders-empty p {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+}
