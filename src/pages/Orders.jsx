@@ -11,49 +11,50 @@ const getHeaders = () => ({
 })
 
 const STATUS_FILTERS = [
-  { key: 'all', label: 'TODAS', color: null },
-  { key: 'pending', label: 'PENDIENTE', color: '#f59e0b' },
-  { key: 'scanned', label: 'ESCANEADO', color: '#3b82f6' },
-  { key: 'packed', label: 'EMPACADO', color: '#16a34a' },
+  { key: 'all',     label: 'TODAS',      color: null      },
+  { key: 'pending', label: 'PENDIENTE',  color: '#f59e0b' },
+  { key: 'scanned', label: 'ESCANEADO',  color: '#3b82f6' },
+  { key: 'packed',  label: 'EMPACADO',   color: '#16a34a' },
 ]
 
-
 const SHIPPING_FILTERS = [
-  { key: 'all', label: 'TODAS', color: null },
-  { key: 'por_despachar', label: 'POR DESPACHAR', color: '#f59e0b' },
-  { key: 'en_transito', label: 'EN TRÁNSITO', color: '#3b82f6' },
-  { key: 'finalizados', label: 'FINALIZADOS', color: '#16a34a' },
+  { key: 'all',          label: 'TODAS',         color: null      },
+  { key: 'por_despachar',label: 'POR DESPACHAR', color: '#f59e0b' },
+  { key: 'en_transito',  label: 'EN TRÁNSITO',   color: '#3b82f6' },
+  { key: 'finalizados',  label: 'FINALIZADOS',   color: '#16a34a' },
 ]
 
 export default function Orders() {
-  const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [syncing, setSyncing] = useState(false)
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [shippingFilter, setShippingFilter] = useState('all')
-  const [search, setSearch] = useState('')
-  const [toast, setToast] = useState(null)
-  const [theme, setTheme] = useState(() =>
+  const [orders,          setOrders]          = useState([])
+  const [loading,         setLoading]         = useState(false)
+  const [syncing,         setSyncing]         = useState(false)
+  const [statusFilter,    setStatusFilter]    = useState('all')
+  const [shippingFilter,  setShippingFilter]  = useState('all')
+  const [search,          setSearch]          = useState('')
+  const [toast,           setToast]           = useState(null)
+  const [lastSyncAt,      setLastSyncAt]      = useState(null)
+  const [theme,           setTheme]           = useState(() =>
     localStorage.getItem('picking_theme') || 'light'
   )
 
-  // Aplicar tema al root
+  /* ── Tema ── */
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('picking_theme', theme)
   }, [theme])
 
-  const toggleTheme = () =>
-    setTheme(t => (t === 'dark' ? 'light' : 'dark'))
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
 
+  /* ── Toast ── */
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type })
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 3500)
   }
 
-  const loadOrders = async () => {
+  /* ── Cargar órdenes desde DB ── */
+  const loadOrders = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       const res = await fetch(`${API_URL}/orders`, { headers: getHeaders() })
       if (res.status === 401) { logout(); return }
       const data = await res.json()
@@ -61,72 +62,97 @@ export default function Orders() {
     } catch {
       showToast('Error cargando órdenes', 'error')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
+  /* ── Sync: llama a ML, guarda en DB, luego refresca ── */
   const handleSync = async () => {
     try {
       setSyncing(true)
-      const res = await fetch(`${API_URL}/orders/sync`, {
+
+      // 1. Sync incremental contra ML
+      const syncRes = await fetch(`${API_URL}/orders/sync`, {
         method: 'POST',
         headers: getHeaders(),
       })
-      if (!res.ok) throw new Error()
-      showToast('✓ Órdenes sincronizadas')
-      await loadOrders()
-    } catch {
-      showToast('Error al sincronizar', 'error')
+      const syncData = await syncRes.json()
+      if (!syncRes.ok) throw new Error(syncData.error || 'Error al sincronizar')
+
+      // 2. Refrescar desde DB en silencio (no toca el spinner de carga)
+      await loadOrders(true)
+
+      // 3. Toast con info real del backend
+      const n = syncData.total ?? 0
+      const msg = n === 0
+        ? '✓ Todo al día — sin cambios'
+        : `✓ ${n} orden${n !== 1 ? 'es' : ''} actualizada${n !== 1 ? 's' : ''}`
+
+      setLastSyncAt(new Date())
+      showToast(msg)
+    } catch (e) {
+      showToast(e.message || 'Error al sincronizar', 'error')
     } finally {
       setSyncing(false)
     }
   }
 
+  /* ── Carga inicial desde DB ── */
   useEffect(() => { loadOrders() }, [])
 
-  // Estadísticas
+  /* ── Stats ── */
   const stats = useMemo(() => ({
-    total: orders.length,
+    total:   orders.length,
     pending: orders.filter(o => o.pickingStatus === 'pending').length,
     scanned: orders.filter(o => o.pickingStatus === 'scanned').length,
-    packed: orders.filter(o => o.pickingStatus === 'packed').length,
+    packed:  orders.filter(o => o.pickingStatus === 'packed').length,
   }), [orders])
 
-  // Conteo de envíos para badges
-
+  /* ── Conteo envíos ── */
   const shippingCounts = useMemo(() => {
     const counts = { all: orders.length }
     SHIPPING_FILTERS.forEach(f => {
-      if (f.key !== 'all') {
+      if (f.key !== 'all')
         counts[f.key] = orders.filter(o => o.shippingCategory === f.key).length
-      }
     })
     return counts
   }, [orders])
 
-  // Filtrado + búsqueda combinados
+  /* ── Filtrado + orden por fecha ── */
   const filtered = useMemo(() => {
-    return orders.filter(o => {
-      const matchStatus = statusFilter === 'all' || o.pickingStatus === statusFilter
-
-      const matchShipping = shippingFilter === 'all' || o.shippingCategory === shippingFilter
-      const matchSearch = !search ||
-        o.id.toString().includes(search) ||
-        o.buyerNickname?.toLowerCase().includes(search.toLowerCase())
-      return matchStatus && matchShipping && matchSearch
-    })
+    return orders
+      .filter(o => {
+        const matchStatus   = statusFilter   === 'all' || o.pickingStatus    === statusFilter
+        const matchShipping = shippingFilter === 'all' || o.shippingCategory === shippingFilter
+        const matchSearch   = !search ||
+          o.id.toString().includes(search) ||
+          o.buyerNickname?.toLowerCase().includes(search.toLowerCase())
+        return matchStatus && matchShipping && matchSearch
+      })
+      .sort((a, b) => {
+        // Ordenar por lastUpdatedAt si existe, sino por createdAt — más reciente primero
+        const dateA = new Date(a.lastUpdatedAt ?? a.createdAt)
+        const dateB = new Date(b.lastUpdatedAt ?? b.createdAt)
+        return dateB - dateA
+      })
   }, [orders, statusFilter, shippingFilter, search])
+
+  /* ── Helpers ── */
+  const formatSyncTime = (date) => {
+    if (!date) return null
+    return date.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+  }
 
   return (
     <div className="orders-root">
       <div className="orders-bg-grid" />
 
-      {/* ── Header ── */}
       <Header
         theme={theme}
         onToggleTheme={toggleTheme}
         onSync={handleSync}
         syncing={syncing}
+        syncMsg={lastSyncAt ? `✓ ${formatSyncTime(lastSyncAt)}` : null}
       />
 
       <main className="orders-main">
@@ -134,7 +160,14 @@ export default function Orders() {
         {/* ── Título ── */}
         <div className="orders-page-title">
           <h1>ÓRDENES</h1>
-          <p>{orders.length} órdenes totales · Mercado Libre</p>
+          <p>
+            {orders.length} órdenes en base de datos
+            {lastSyncAt && (
+              <span className="orders-last-sync">
+                · último sync {formatSyncTime(lastSyncAt)}
+              </span>
+            )}
+          </p>
         </div>
 
         {/* ── Stats ── */}
@@ -162,8 +195,9 @@ export default function Orders() {
 
           {/* Búsqueda */}
           <div className="orders-search-wrapper">
-            <svg className="orders-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+            <svg className="orders-search-icon" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
             </svg>
             <input
               className="orders-search"
@@ -173,13 +207,12 @@ export default function Orders() {
               onChange={e => setSearch(e.target.value)}
             />
             {search && (
-              <button className="orders-search-clear" onClick={() => setSearch('')} aria-label="Limpiar">
-                ×
-              </button>
+              <button className="orders-search-clear"
+                onClick={() => setSearch('')} aria-label="Limpiar">×</button>
             )}
           </div>
 
-          {/* Filtros de estado */}
+          {/* Filtros estado picking */}
           <div className="orders-filter-group">
             <span className="filter-group-label">ESTADO</span>
             <div className="orders-filters-scroll">
@@ -189,7 +222,7 @@ export default function Orders() {
                   className={`orders-filter-btn ${statusFilter === f.key ? `active-${f.key}` : ''}`}
                   onClick={() => setStatusFilter(f.key)}
                 >
-                  {f.color && <span className="filter-dot" style={{ background: f.color }} />}
+                  {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
                   {f.label}
                   {f.key !== 'all' && (
                     <span className="filter-count">({stats[f.key]})</span>
@@ -199,18 +232,17 @@ export default function Orders() {
             </div>
           </div>
 
-          {/* Filtros de envío */}
+          {/* Filtros envío */}
           <div className="orders-filter-group">
             <span className="filter-group-label">ENVÍO</span>
             <div className="orders-filters-scroll">
-
               {SHIPPING_FILTERS.map(f => (
                 <button
                   key={f.key}
                   className={`orders-filter-btn shipping ${shippingFilter === f.key ? 'active-shipping' : ''}`}
                   onClick={() => setShippingFilter(f.key)}
                 >
-                  {f.color && <span className="filter-dot" style={{ background: f.color }} />}
+                  {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
                   {f.label}
                   <span className="filter-count">({shippingCounts[f.key] ?? 0})</span>
                 </button>
@@ -220,7 +252,7 @@ export default function Orders() {
 
         </div>
 
-        {/* ── Resultado del filtro ── */}
+        {/* ── Filtros activos ── */}
         {(statusFilter !== 'all' || shippingFilter !== 'all' || search) && (
           <div className="orders-active-filters">
             <span className="active-filters-info">
@@ -239,18 +271,19 @@ export default function Orders() {
         <div className="orders-table-wrapper">
           {loading ? (
             <div className="orders-empty">
-              <span className="spinner-large" />
+              <span className="spinner-large"/>
               <p>CARGANDO</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="orders-empty">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="1.5">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
               </svg>
               <p>SIN RESULTADOS</p>
             </div>
           ) : (
-            <OrderTable orders={filtered} />
+            <OrderTable orders={filtered}/>
           )}
         </div>
 

@@ -64,6 +64,7 @@ export default function ScanOrder() {
     } finally {
       setLoading(false)
       setCode('')
+      if (inputRef.current) inputRef.current.value = ''
       // Refocus siempre, incluso si hay resultado
       setTimeout(() => inputRef.current?.focus(), 50)
     }
@@ -71,7 +72,10 @@ export default function ScanOrder() {
 
   const handleScan = (e) => {
     e.preventDefault()
-    submitCode(code)
+    // Leer directo del DOM — el scanner es tan rápido que el estado React
+    // puede estar desactualizado cuando llega el Enter
+    const value = inputRef.current?.value || code
+    submitCode(value)
   }
 
   const handlePack = async () => {
@@ -99,7 +103,8 @@ export default function ScanOrder() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setSyncMsg('✓ OK')
+      const n = data.total ?? 0
+      setSyncMsg(n === 0 ? '✓ Al día' : `✓ ${n} nuevas`)
     } catch {
       setSyncMsg('✗ Error')
     } finally {

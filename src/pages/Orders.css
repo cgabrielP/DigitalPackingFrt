@@ -105,7 +105,7 @@
   pointer-events: none;
   z-index: 0;
 }
-
+.orders-last-sync { color: var(--text-faint); }
 
 
 /* ════════════════════════════════════════
