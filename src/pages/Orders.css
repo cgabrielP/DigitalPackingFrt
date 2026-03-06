@@ -707,7 +707,152 @@
     font-size: 10px;
   }
 }
+/* ════════════════════════════════════════
+   DATE PICKER — pegar al final de Orders.css
+════════════════════════════════════════ */
 
+/* Wrapper con position relative para contener el popup */
+.orders-date-wrapper {
+  position: relative;
+}
+
+/* Botón fecha activo */
+.orders-filter-btn.active-date {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+/* X para limpiar fecha rápido */
+.date-clear-x {
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0.7;
+  margin-left: 2px;
+  transition: opacity 0.15s;
+}
+.date-clear-x:hover { opacity: 1; }
+
+/* Popup del calendario */
+.orders-calendar-popup {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 9999;          /* encima de todo */
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 10px 10px 8px;
+  animation: fadeUp 0.18s ease;
+}
+
+/* Footer del popup */
+.cal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.cal-btn-clear,
+.cal-btn-close {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.cal-btn-clear {
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--text-secondary);
+}
+.cal-btn-clear:hover { border-color: var(--border-hover); color: var(--text-primary); }
+
+.cal-btn-close {
+  background: #8b5cf6;
+  border: none;
+  color: #fff;
+}
+.cal-btn-close:hover { opacity: 0.85; }
+
+/* ── Override react-datepicker para los tokens de tema ── */
+.react-datepicker {
+  font-family: 'Space Mono', monospace !important;
+  background: var(--bg-surface) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+}
+
+.react-datepicker__header {
+  background: var(--bg-elevated) !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name {
+  color: var(--text-primary) !important;
+  font-size: 10px !important;
+  letter-spacing: 1px !important;
+}
+
+.react-datepicker__day {
+  color: var(--text-primary) !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  transition: background 0.12s !important;
+}
+
+.react-datepicker__day:hover {
+  background: var(--bg-hover) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--range-start,
+.react-datepicker__day--range-end {
+  background: #8b5cf6 !important;
+  color: #fff !important;
+}
+
+.react-datepicker__day--in-range {
+  background: rgba(139, 92, 246, 0.18) !important;
+  color: #c4b5fd !important;
+  border-radius: 0 !important;
+}
+
+.react-datepicker__day--in-selecting-range {
+  background: rgba(139, 92, 246, 0.12) !important;
+  color: #c4b5fd !important;
+}
+
+.react-datepicker__day--disabled {
+  color: var(--text-faint) !important;
+}
+
+.react-datepicker__day--outside-month {
+  color: var(--text-faint) !important;
+  opacity: 0.4;
+}
+
+.react-datepicker__navigation-icon::before {
+  border-color: var(--text-secondary) !important;
+}
+
+/* Mobile: popup hacia la derecha */
+@media (max-width: 480px) {
+  .orders-calendar-popup {
+    left: auto;
+    right: 0;
+  }
+}
 /* ════════════════════════════════════════
    RESPONSIVE — SMALL MOBILE  (< 480px)
 ════════════════════════════════════════ */
