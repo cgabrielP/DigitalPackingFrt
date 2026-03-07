@@ -1,0 +1,346 @@
+/* ════════════════════════════════════════
+   SIDEBAR
+   Desktop: colapsable (60px ↔ 220px)
+   Mobile:  overlay desde la izquierda
+════════════════════════════════════════ */
+
+/* ── Variables locales ── */
+:root {
+  --sb-width:          220px;
+  --sb-width-collapsed: 60px;
+  --sb-transition:     0.25s cubic-bezier(.4,0,.2,1);
+}
+
+/* ════════════════════════════════════════
+   LAYOUT WRAPPER
+════════════════════════════════════════ */
+.layout-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+  transition: background 0.25s, color 0.25s;
+}
+
+.layout-body {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+/* El main se desplaza según el ancho del sidebar */
+.layout-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sb-width);
+  transition: margin-left var(--sb-transition);
+}
+
+.layout-main--collapsed {
+  margin-left: var(--sb-width-collapsed);
+}
+
+/* ════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════ */
+.sb {
+  position: fixed;
+  top: 60px;          /* debajo del header */
+  left: 0;
+  bottom: 0;
+  width: var(--sb-width);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 90;
+  overflow: hidden;
+  transition: width var(--sb-transition), background 0.25s, border-color 0.25s;
+}
+
+.sb--collapsed {
+  width: var(--sb-width-collapsed);
+}
+
+/* ── Sección de nav items ── */
+.sb-nav {
+  flex: 1;
+  padding: 12px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.sb-nav::-webkit-scrollbar { display: none; }
+
+/* ── Separador de sección ── */
+.sb-section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2.5px;
+  color: var(--text-faint);
+  padding: 16px 20px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity var(--sb-transition), padding var(--sb-transition);
+}
+
+.sb--collapsed .sb-section-label {
+  opacity: 0;
+  padding-top: 10px;
+  padding-bottom: 2px;
+  pointer-events: none;
+}
+
+/* ── Divisor ── */
+.sb-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 12px;
+  transition: margin var(--sb-transition);
+}
+
+.sb--collapsed .sb-divider { margin: 8px 10px; }
+
+/* ── Item ── */
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 12px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-secondary);
+  border-radius: 0;
+  position: relative;
+  transition: color 0.15s, background 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sb-item:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* Estado activo */
+.sb-item--active {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
+/* Línea lateral izquierda en activo */
+.sb-item--active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 6px; bottom: 6px;
+  width: 2px;
+  background: #f59e0b;
+  border-radius: 0 2px 2px 0;
+}
+
+/* ── Ícono dentro del item ── */
+.sb-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.sb-item:hover .sb-item-icon,
+.sb-item--active .sb-item-icon {
+  background: var(--bg-hover);
+}
+
+/* Colores de acento por ítem */
+.sb-item--active.sb-item--amber .sb-item-icon { background: rgba(245,158,11,0.12); }
+.sb-item--active.sb-item--amber { color: #f59e0b; }
+.sb-item--active.sb-item--amber::before { background: #f59e0b; }
+
+.sb-item--active.sb-item--purple .sb-item-icon { background: rgba(167,139,250,0.12); }
+.sb-item--active.sb-item--purple { color: #a78bfa; }
+.sb-item--active.sb-item--purple::before { background: #a78bfa; }
+
+.sb-item--active.sb-item--blue .sb-item-icon { background: rgba(96,165,250,0.12); }
+.sb-item--active.sb-item--blue { color: #60a5fa; }
+.sb-item--active.sb-item--blue::before { background: #60a5fa; }
+
+.sb-item--active.sb-item--green .sb-item-icon { background: rgba(52,211,153,0.12); }
+.sb-item--active.sb-item--green { color: #34d399; }
+.sb-item--active.sb-item--green::before { background: #34d399; }
+
+/* ── Label del item ── */
+.sb-item-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  flex: 1;
+  transition: opacity var(--sb-transition);
+}
+
+.sb--collapsed .sb-item-label {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Badge de notificación ── */
+.sb-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #f59e0b;
+  color: #000;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: opacity var(--sb-transition), transform var(--sb-transition);
+}
+
+.sb--collapsed .sb-badge {
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+}
+
+/* ── Badge punto (collapsed) ── */
+.sb-badge-dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid var(--bg-surface);
+  opacity: 0;
+  transition: opacity var(--sb-transition);
+  pointer-events: none;
+}
+
+.sb--collapsed .sb-item--has-badge .sb-badge-dot { opacity: 1; }
+
+/* ── Footer del sidebar (botón collapse) ── */
+.sb-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sb--collapsed .sb-footer { justify-content: center; }
+
+.sb-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sb-collapse-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.sb-collapse-icon {
+  transition: transform var(--sb-transition);
+}
+
+.sb--collapsed .sb-collapse-icon { transform: rotate(180deg); }
+
+/* ── Tooltip en modo colapsado ── */
+.sb-item[data-tooltip] { position: relative; }
+
+.sb--collapsed .sb-item[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  z-index: 200;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  pointer-events: none;
+}
+
+/* ════════════════════════════════════════
+   MOBILE OVERLAY
+════════════════════════════════════════ */
+.sb-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+  z-index: 89;
+  animation: sb-fade 0.2s ease;
+}
+
+@keyframes sb-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sb-slide-in { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
+/* ════════════════════════════════════════
+   RESPONSIVE — MOBILE (< 768px)
+════════════════════════════════════════ */
+@media (max-width: 767px) {
+  :root { --sb-width: 260px; }
+
+  .sb {
+    top: 54px;
+    width: var(--sb-width) !important;
+    transform: translateX(-100%);
+    transition: transform var(--sb-transition), background 0.25s;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+  }
+
+  .sb--mobile-open {
+    transform: translateX(0);
+    animation: sb-slide-in 0.25s cubic-bezier(.4,0,.2,1);
+  }
+
+  .sb-backdrop { display: block; }
+
+  .sb-footer { display: none; }
+
+  .sb-item-label { opacity: 1 !important; pointer-events: auto !important; }
+  .sb-badge      { opacity: 1 !important; transform: scale(1) !important; pointer-events: auto !important; }
+  .sb-badge-dot  { opacity: 0 !important; }
+  .sb-section-label { opacity: 1 !important; padding: 16px 20px 6px !important; }
+
+  /* El main no se desplaza en mobile */
+  .layout-main,
+  .layout-main--collapsed {
+    margin-left: 0 !important;
+  }
+}

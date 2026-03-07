@@ -253,3 +253,13 @@
   .app-header-actions { gap: 6px; }
   .app-logo-dot       { display: none; }
 }
+/* ── Hamburger — solo visible en mobile ── */
+.app-header-hamburger {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .app-header-hamburger {
+    display: flex;
+  }
+}

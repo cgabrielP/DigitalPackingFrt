@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
-import { Sun, Moon, ScanBarcode, LayoutGrid, RefreshCw, Loader2 } from 'lucide-react'
+import { Sun, Moon, ScanBarcode, LayoutGrid, RefreshCw, Loader2, Menu } from 'lucide-react'
 import { logout } from '../utils/auth'
 import './Header.css'
 
@@ -12,7 +12,6 @@ const getSession = () => {
   } catch { return null }
 }
 
-/* ── Iniciales del nombre ── */
 const getInitials = (name) => {
   if (!name) return '?'
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
@@ -34,7 +33,6 @@ const AvatarDropdown = ({ session }) => {
   const navigate        = useNavigate()
   const isAdmin         = session?.role === 'ADMIN'
 
-  // Cerrar al clickear afuera
   useEffect(() => {
     if (!open) return
     const handler = (e) => {
@@ -52,7 +50,6 @@ const AvatarDropdown = ({ session }) => {
   return (
     <div className="av-wrapper" ref={ref}>
 
-      {/* ── Trigger ── */}
       <button
         className={`av-trigger ${open ? 'av-trigger--open' : ''}`}
         onClick={() => setOpen(v => !v)}
@@ -68,11 +65,9 @@ const AvatarDropdown = ({ session }) => {
         </span>
       </button>
 
-      {/* ── Dropdown ── */}
       {open && (
         <div className="av-dropdown" role="menu">
 
-          {/* Cabecera del usuario */}
           <div className="av-user-header">
             <div className="av-user-avatar-lg">{initials}</div>
             <div className="av-user-info">
@@ -85,7 +80,6 @@ const AvatarDropdown = ({ session }) => {
 
           <div className="av-divider" />
 
-          {/* Items — solo ADMIN */}
           {isAdmin && (
             <>
               <button className="av-item" onClick={() => go('/settings')} role="menuitem">
@@ -111,7 +105,6 @@ const AvatarDropdown = ({ session }) => {
             </>
           )}
 
-          {/* Logout — todos los roles */}
           <button className="av-item av-item--danger" onClick={logout} role="menuitem">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2">
@@ -128,14 +121,19 @@ const AvatarDropdown = ({ session }) => {
 
 /* ════════════════════════════════════════
    HEADER
+   Props nuevas:
+   - subtitle     : texto junto al logo
+   - onMenuToggle : abre el sidebar en mobile
 ════════════════════════════════════════ */
 export default function Header({
+  subtitle       = 'SYSTEM',
   theme,
   onToggleTheme,
-  onSync,
-  syncing,
-  syncMsg  = null,
-  navPath  = '/scan',
+  onSync         = null,
+  syncing        = false,
+  syncMsg        = null,
+  navPath        = null,
+  onMenuToggle   = null,   // ← nuevo: hamburger mobile
 }) {
   const navigate  = useNavigate()
   const session   = getSession()
@@ -151,14 +149,29 @@ export default function Header({
   return (
     <header className="app-header">
 
-      {/* ── Logo ── */}
       <div className="app-header-left">
-        <span className="app-logo">PICKING</span>
-        <span className="app-logo-dot">●</span>
-        <span className="app-logo-sub">SYSTEM</span>
+        {/* Hamburger — solo mobile, solo si hay sidebar */}
+        {onMenuToggle && (
+          <button
+            className="app-header-icon-btn app-header-hamburger"
+            onClick={onMenuToggle}
+            aria-label="Abrir menú"
+          >
+            <Menu size={18} color={iconColor} strokeWidth={2} />
+          </button>
+        )}
+
+        {/* Logo — link a orders */}
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+          onClick={() => navigate('/orders')}
+        >
+          <span className="app-logo">PICKING</span>
+          <span className="app-logo-dot">●</span>
+          <span className="app-logo-sub">{subtitle}</span>
+        </div>
       </div>
 
-      {/* ── Acciones ── */}
       <div className="app-header-actions">
 
         {/* Toggle tema */}
@@ -173,24 +186,28 @@ export default function Header({
           }
         </button>
 
-        {/* Navegación */}
-        <button className="app-header-btn" onClick={() => navigate(navPath)}>
-          <NavIcon size={iconSize} color={iconColor} strokeWidth={2} />
-          <span className="app-header-btn-label">{navLabel}</span>
-        </button>
+        {/* Navegación — solo si se pasa navPath */}
+        {navPath && (
+          <button className="app-header-btn" onClick={() => navigate(navPath)}>
+            <NavIcon size={iconSize} color={iconColor} strokeWidth={2} />
+            <span className="app-header-btn-label">{navLabel}</span>
+          </button>
+        )}
 
-        {/* Sincronizar */}
-        <button
-          className="app-header-sync-btn"
-          onClick={onSync}
-          disabled={syncing}
-        >
-          {syncing
-            ? <Loader2   size={13} color="#000" strokeWidth={2.5} className="spin" />
-            : <RefreshCw size={13} color="#000" strokeWidth={2.5} />
-          }
-          <span className="app-header-btn-label">{syncLabel}</span>
-        </button>
+        {/* Sincronizar — solo si se pasa onSync */}
+        {onSync && (
+          <button
+            className="app-header-sync-btn"
+            onClick={onSync}
+            disabled={syncing}
+          >
+            {syncing
+              ? <Loader2   size={13} color="#000" strokeWidth={2.5} className="spin" />
+              : <RefreshCw size={13} color="#000" strokeWidth={2.5} />
+            }
+            <span className="app-header-btn-label">{syncLabel}</span>
+          </button>
+        )}
 
         {/* Avatar dropdown */}
         <AvatarDropdown session={session} />
