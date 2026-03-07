@@ -1,26 +1,160 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isTokenValid } from '../utils/auth'
 import './Login.css'
 
 const API_URL = import.meta.env.VITE_API_URL
 
-export default function Login() {
-  const navigate = useNavigate()
-  const [expired, setExpired] = useState(false)
+const saveSession = (token) => localStorage.setItem('app_token', token)
 
-  useEffect(() => {
-    if (isTokenValid()) {
-      navigate('/orders', { replace: true })
-      return
+/* ─── Alert ── */
+const Alert = ({ type, msg }) => (
+  <div className={`login-alert login-alert--${type}`}>
+    <span>{type === 'error' ? '✕' : '✓'}</span>
+    <span>{msg}</span>
+  </div>
+)
+
+/* ════════════════════════════════════════
+   REGISTER FORM
+════════════════════════════════════════ */
+const RegisterForm = ({ onSuccess }) => {
+  const [form, setForm]       = useState({ name: '', email: '', password: '', tenantName: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState(null)
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const handleSubmit = async () => {
+    setError(null)
+    if (!form.name || !form.email || !form.password)
+      return setError('Completá nombre, email y contraseña')
+
+    setLoading(true)
+    try {
+      const res  = await fetch(`${API_URL}/auth/register`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      saveSession(data.token)
+      onSuccess()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-    const token = localStorage.getItem('app_token')
-    if (token) setExpired(true)
+  }
+
+  const handleKey = (e) => { if (e.key === 'Enter') handleSubmit() }
+
+  return (
+    <>
+      {error && <Alert type="error" msg={error} />}
+
+      <div className="login-field">
+        <label className="login-label">NOMBRE</label>
+        <input className="login-input" placeholder="Tu nombre"
+          value={form.name} onChange={set('name')} onKeyDown={handleKey} />
+      </div>
+
+      <div className="login-field">
+        <label className="login-label">EMPRESA <span className="login-optional">(OPCIONAL)</span></label>
+        <input className="login-input" placeholder="Nombre de tu empresa"
+          value={form.tenantName} onChange={set('tenantName')} onKeyDown={handleKey} />
+      </div>
+
+      <div className="login-field">
+        <label className="login-label">EMAIL</label>
+        <input className="login-input" type="email" placeholder="tu@email.com"
+          value={form.email} onChange={set('email')} onKeyDown={handleKey} />
+      </div>
+
+      <div className="login-field login-field--last">
+        <label className="login-label">CONTRASEÑA</label>
+        <input className="login-input" type="password" placeholder="Mínimo 8 caracteres"
+          value={form.password} onChange={set('password')} onKeyDown={handleKey} />
+      </div>
+
+      <button className="login-btn-primary" onClick={handleSubmit} disabled={loading}>
+        {loading && <span className="login-spin" />}
+        {loading ? 'CREANDO CUENTA...' : 'CREAR CUENTA'}
+      </button>
+    </>
+  )
+}
+
+/* ════════════════════════════════════════
+   LOGIN FORM
+════════════════════════════════════════ */
+const LoginForm = ({ onSuccess }) => {
+  const [form, setForm]       = useState({ email: '', password: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState(null)
+
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const handleSubmit = async () => {
+    setError(null)
+    setLoading(true)
+    try {
+      const res  = await fetch(`${API_URL}/auth/login`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      saveSession(data.token)
+      onSuccess()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleKey = (e) => { if (e.key === 'Enter') handleSubmit() }
+
+  return (
+    <>
+      {error && <Alert type="error" msg={error} />}
+
+      <div className="login-field">
+        <label className="login-label">EMAIL</label>
+        <input className="login-input" type="email" placeholder="tu@email.com"
+          value={form.email} onChange={set('email')} onKeyDown={handleKey} />
+      </div>
+
+      <div className="login-field login-field--last">
+        <label className="login-label">CONTRASEÑA</label>
+        <input className="login-input" type="password" placeholder="••••••••"
+          value={form.password} onChange={set('password')} onKeyDown={handleKey} />
+      </div>
+
+      <button className="login-btn-primary" onClick={handleSubmit} disabled={loading}>
+        {loading && <span className="login-spin" />}
+        {loading ? 'INGRESANDO...' : 'INGRESAR'}
+      </button>
+    </>
+  )
+}
+
+/* ════════════════════════════════════════
+   PAGE
+════════════════════════════════════════ */
+export default function Login() {
+  const [tab, setTab] = useState('login')
+  const navigate      = useNavigate()
+
+  // Si ya tiene sesión válida, redirigir
+  useEffect(() => {
+    if (isTokenValid()) navigate('/settings', { replace: true })
   }, [])
 
-  const handleConnect = () => {
-    window.location.href = `${API_URL}/auth/mercadolibre`
-  }
+  const handleSuccess = () => navigate('/settings', { replace: true })
 
   return (
     <div className="login-root">
@@ -31,55 +165,39 @@ export default function Login() {
 
         {/* Brand */}
         <div className="login-brand">
-          <div className="login-logo-wrapper">
-            {/* Ícono de caja/picking */}
-            <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.5">
+          <div className="login-brand-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.6">
               <path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/>
               <path d="M12 3v14M3.27 6.96L12 12l8.73-5.04"/>
             </svg>
           </div>
           <div>
-            <h1 className="login-title">DIGITAL PICKING</h1>
-            <p className="login-subtitle">SISTEMA DE EMPAQUE</p>
+            <p className="login-brand-name">PICKING</p>
+            <p className="login-brand-sub">SISTEMA DE EMPAQUE</p>
           </div>
         </div>
 
-        <div className="login-divider" />
-
-        {/* Beneficios */}
-        <div className="login-info">
-          <div className="login-info-item">
-            <span className="login-info-dot" />
-            Sincroniza tus órdenes de Mercado Libre
-          </div>
-          <div className="login-info-item">
-            <span className="login-info-dot" />
-            Escanea y verifica productos antes de empacar
-          </div>
-          <div className="login-info-item">
-            <span className="login-info-dot" />
-            Reduce errores en el despacho
-          </div>
+        {/* Tabs */}
+        <div className="login-tabs">
+          <button
+            className={`login-tab ${tab === 'login' ? 'login-tab--active' : ''}`}
+            onClick={() => setTab('login')}
+          >
+            INGRESAR
+          </button>
+          <button
+            className={`login-tab ${tab === 'register' ? 'login-tab--active' : ''}`}
+            onClick={() => setTab('register')}
+          >
+            REGISTRARSE
+          </button>
         </div>
 
-        {/* Error sesión expirada */}
-        {expired && (
-          <div className="login-error">
-            <span>⚠</span>
-            Tu sesión expiró. Vuelve a conectar tu cuenta.
-          </div>
-        )}
-
-        {/* Botón */}
-        <button className="login-btn" onClick={handleConnect}>
-          
-          INICIAR CON MERCADO LIBRE
-        </button>
-
-        <p className="login-footer">
-          Al continuar autorizas a Digital Picking a acceder<br />
-          a tus órdenes de Mercado Libre de forma segura.
-        </p>
+        {/* Form */}
+        {tab === 'login'
+          ? <LoginForm    onSuccess={handleSuccess} />
+          : <RegisterForm onSuccess={handleSuccess} />
+        }
 
       </div>
     </div>

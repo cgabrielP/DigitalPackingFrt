@@ -13,17 +13,17 @@ const getHeaders = () => ({
 })
 
 const STATUS_FILTERS = [
-  { key: 'all',     label: 'TODAS',     color: null      },
+  { key: 'all', label: 'TODAS', color: null },
   { key: 'pending', label: 'PENDIENTE', color: '#f59e0b' },
   { key: 'scanned', label: 'ESCANEADO', color: '#3b82f6' },
-  { key: 'packed',  label: 'EMPACADO',  color: '#16a34a' },
+  { key: 'packed', label: 'EMPACADO', color: '#16a34a' },
 ]
 
 const SHIPPING_FILTERS = [
-  { key: 'all',           label: 'TODAS',         color: null      },
+  { key: 'all', label: 'TODAS', color: null },
   { key: 'por_despachar', label: 'POR DESPACHAR', color: '#f59e0b' },
-  { key: 'en_transito',   label: 'EN TRÁNSITO',   color: '#3b82f6' },
-  { key: 'finalizados',   label: 'FINALIZADOS',   color: '#16a34a' },
+  { key: 'en_transito', label: 'EN TRÁNSITO', color: '#3b82f6' },
+  { key: 'finalizados', label: 'FINALIZADOS', color: '#16a34a' },
 ]
 
 const formatShort = (date) => {
@@ -32,19 +32,19 @@ const formatShort = (date) => {
 }
 
 export default function Orders() {
-  const [orders,         setOrders]         = useState([])
-  const [loading,        setLoading]        = useState(false)
-  const [syncing,        setSyncing]        = useState(false)
-  const [statusFilter,   setStatusFilter]   = useState('all')
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('all')
   const [shippingFilter, setShippingFilter] = useState('all')
-  const [search,         setSearch]         = useState('')
-  const [toast,          setToast]          = useState(null)
-  const [dateRange,      setDateRange]      = useState([null, null])
-  const [calendarOpen,   setCalendarOpen]   = useState(false)
+  const [search, setSearch] = useState('')
+  const [toast, setToast] = useState(null)
+  const [dateRange, setDateRange] = useState([null, null])
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const [startDate, endDate] = dateRange
 
   const calendarRef = useRef(null)
-  const btnRef      = useRef(null)
+  const btnRef = useRef(null)
 
   const [theme, setTheme] = useState(() =>
     localStorage.getItem('picking_theme') || 'light'
@@ -63,7 +63,7 @@ export default function Orders() {
     const handler = (e) => {
       if (
         calendarRef.current && !calendarRef.current.contains(e.target) &&
-        btnRef.current      && !btnRef.current.contains(e.target)
+        btnRef.current && !btnRef.current.contains(e.target)
       ) {
         setCalendarOpen(false)
       }
@@ -111,10 +111,10 @@ export default function Orders() {
   useEffect(() => { loadOrders() }, [])
 
   const stats = useMemo(() => ({
-    total:   orders.length,
+    total: orders.length,
     pending: orders.filter(o => o.pickingStatus === 'pending').length,
     scanned: orders.filter(o => o.pickingStatus === 'scanned').length,
-    packed:  orders.filter(o => o.pickingStatus === 'packed').length,
+    packed: orders.filter(o => o.pickingStatus === 'packed').length,
   }), [orders])
 
   const shippingCounts = useMemo(() => {
@@ -125,41 +125,54 @@ export default function Orders() {
     })
     return counts
   }, [orders])
-
+  // Función auxiliar — poner arriba del componente, fuera del useMemo
+  const toDateOnly = (value) => {
+    if (!value) return null
+    const d = new Date(value)
+    if (isNaN(d)) return null
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  }
   const filtered = useMemo(() => {
-    return orders.filter(o => {
-      const matchStatus   = statusFilter   === 'all' || o.pickingStatus    === statusFilter
-      const matchShipping = shippingFilter === 'all' || o.shippingCategory === shippingFilter
-      const matchSearch   = !search ||
-        o.id?.toString().includes(search) ||
-        o.displayIdentifier?.toString().includes(search) ||
-        o.buyerNickname?.toLowerCase().includes(search.toLowerCase())
+    return orders
+      .filter(o => {
+        const matchStatus = statusFilter === 'all' || o.pickingStatus === statusFilter
+        const matchShipping = shippingFilter === 'all' || o.shippingCategory === shippingFilter
+        const matchSearch = !search ||
+          o.id?.toString().includes(search) ||
+          o.displayIdentifier?.toString().includes(search) ||
+          o.buyerNickname?.toLowerCase().includes(search.toLowerCase())
 
-      let matchDate = true
-      if (startDate || endDate) {
-        const raw = o.createdAt ?? o.lastUpdatedAt
-        if (raw) {
-          const orderDate = new Date(raw)
-          if (startDate) {
-            const from = new Date(startDate)
-            from.setHours(0, 0, 0, 0)
-            if (orderDate < from) matchDate = false
-          }
-          if (endDate && matchDate) {
-            const to = new Date(endDate)
-            to.setHours(23, 59, 59, 999)
-            if (orderDate > to) matchDate = false
+        let matchDate = true
+        if (startDate || endDate) {
+          const raw = o.lastUpdatedAt ?? o.createdAt
+          const orderDate = toDateOnly(raw)
+
+          if (!orderDate) {
+            matchDate = false
+          } else {
+            if (startDate) {
+              const from = toDateOnly(startDate)
+              if (orderDate < from) matchDate = false
+            }
+            if (endDate && matchDate) {
+              const to = toDateOnly(endDate)
+              if (orderDate > to) matchDate = false
+            }
           }
         }
-      }
 
-      return matchStatus && matchShipping && matchSearch && matchDate
-    })
+        return matchStatus && matchShipping && matchSearch && matchDate
+      })
+      .sort((a, b) => {                                          // ← agregar esto
+        const dateA = new Date(a.lastUpdatedAt ?? a.createdAt ?? 0)
+        const dateB = new Date(b.lastUpdatedAt ?? b.createdAt ?? 0)
+        return dateB - dateA
+      })
   }, [orders, statusFilter, shippingFilter, search, startDate, endDate])
 
   const dateLabel = useMemo(() => {
     if (!startDate && !endDate) return 'FECHA'
-    if (startDate && !endDate)  return formatShort(startDate)
+    if (startDate && !endDate) return formatShort(startDate)
     return `${formatShort(startDate)} → ${formatShort(endDate)}`
   }, [startDate, endDate])
 
@@ -214,7 +227,7 @@ export default function Orders() {
           {/* Búsqueda */}
           <div className="orders-search-wrapper">
             <svg className="orders-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
             </svg>
             <input
               className="orders-search"
@@ -238,7 +251,7 @@ export default function Orders() {
                   className={`orders-filter-btn ${statusFilter === f.key ? `active-${f.key}` : ''}`}
                   onClick={() => setStatusFilter(f.key)}
                 >
-                  {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
+                  {f.color && <span className="filter-dot" style={{ background: f.color }} />}
                   {f.label}
                   {f.key !== 'all' && <span className="filter-count">({stats[f.key]})</span>}
                 </button>
@@ -256,7 +269,7 @@ export default function Orders() {
                   className={`orders-filter-btn shipping ${shippingFilter === f.key ? 'active-shipping' : ''}`}
                   onClick={() => setShippingFilter(f.key)}
                 >
-                  {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
+                  {f.color && <span className="filter-dot" style={{ background: f.color }} />}
                   {f.label}
                   <span className="filter-count">({shippingCounts[f.key] ?? 0})</span>
                 </button>
@@ -274,8 +287,8 @@ export default function Orders() {
                 onClick={() => setCalendarOpen(v => !v)}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/>
-                  <path d="M16 2v4M8 2v4M3 10h18"/>
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M16 2v4M8 2v4M3 10h18" />
                 </svg>
                 {dateLabel}
                 {(startDate || endDate) && (
@@ -334,18 +347,18 @@ export default function Orders() {
         <div className="orders-table-wrapper">
           {loading ? (
             <div className="orders-empty">
-              <span className="spinner-large"/>
+              <span className="spinner-large" />
               <p>CARGANDO</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="orders-empty">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
               <p>SIN RESULTADOS</p>
             </div>
           ) : (
-            <OrderTable orders={filtered}/>
+            <OrderTable orders={filtered} />
           )}
         </div>
 

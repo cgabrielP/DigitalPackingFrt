@@ -1,8 +1,5 @@
 /* ══════════════════════════════════════════
-   HEADER  —  app-header
-   Los colores de iconos se pasan directamente
-   como prop `color` a cada componente lucide.
-   Este CSS solo maneja estructura y layout.
+   HEADER
 ══════════════════════════════════════════ */
 
 .app-header {
@@ -14,9 +11,7 @@
   height: 60px;
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 0;
-  left: 0;
-  /* fallback sólido sin color-mix */
+  top: 0; left: 0;
   background: var(--bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -27,175 +22,233 @@
 
 /* ── Logo ── */
 .app-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  user-select: none;
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0; user-select: none;
 }
 
 .app-logo {
   font-family: 'Space Mono', monospace;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 4px;
+  font-size: 16px; font-weight: 700;
+  color: var(--text-primary); letter-spacing: 4px;
 }
 
-.app-logo-dot {
-  color: #f59e0b;
-  font-size: 9px;
-  line-height: 1;
-}
+.app-logo-dot  { color: #f59e0b; font-size: 9px; line-height: 1; }
 
 .app-logo-sub {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  color: var(--text-muted);
-  letter-spacing: 3px;
+  font-size: 10px; color: var(--text-muted); letter-spacing: 3px;
 }
 
 /* ── Grupo de acciones ── */
 .app-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
 }
 
-/* ── Botón cuadrado (tema + logout) ── */
+/* ── Botón cuadrado (tema) ── */
 .app-header-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  padding: 0;
-  line-height: 0;        /* elimina espacio fantasma de inline */
-  font-size: 0;          /* evita herencia tipográfica que desplaza SVG */
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; min-width: 36px;
+  padding: 0; line-height: 0; font-size: 0;
   background: var(--bg-surface);
   border: 1px solid var(--border-mid);
-  border-radius: 7px;
-  cursor: pointer;
-  flex-shrink: 0;
+  border-radius: 7px; cursor: pointer; flex-shrink: 0;
   transition: background 0.2s, border-color 0.2s;
 }
 
-.app-header-icon-btn svg {
-  display: block;        /* saca el SVG del flujo inline */
-  flex-shrink: 0;
-  pointer-events: none;
-}
+.app-header-icon-btn svg { display: block; flex-shrink: 0; pointer-events: none; }
+.app-header-icon-btn:hover { background: var(--bg-hover); border-color: var(--border-hover); }
 
-.app-header-icon-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-hover);
-}
-
-.app-header-logout:hover {
-  border-color: rgba(239, 68, 68, 0.45);
-}
-
-/* SVG global dentro de botones del header */
-.app-header-btn svg,
-.app-header-sync-btn svg {
-  display: block;
-  flex-shrink: 0;
-  pointer-events: none;
-}
-
-/* ── Botón con label (escanear) ── */
+/* ── Botón con label ── */
 .app-header-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: inline-flex; align-items: center; gap: 8px;
   background: var(--bg-surface);
   border: 1px solid var(--border-mid);
-  border-radius: 7px;
-  padding: 0 16px;
-  height: 36px;
+  border-radius: 7px; padding: 0 16px; height: 36px;
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 1px;
-  /* el color del texto sigue al icono para coherencia */
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 11px; letter-spacing: 1px; color: var(--text-secondary);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
-.app-header-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-hover);
-  color: var(--text-primary);
-}
+.app-header-btn svg { display: block; flex-shrink: 0; pointer-events: none; }
+.app-header-btn:hover { background: var(--bg-hover); border-color: var(--border-hover); color: var(--text-primary); }
 
 /* ── Botón SINCRONIZAR ── */
 .app-header-sync-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #f59e0b;
-  border: none;
-  border-radius: 7px;
-  padding: 0 18px;
-  height: 36px;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #f59e0b; border: none; border-radius: 7px;
+  padding: 0 18px; height: 36px;
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #000;          /* siempre negro sobre amarillo */
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #000;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
   transition: opacity 0.2s, transform 0.15s;
 }
 
+.app-header-sync-btn svg { display: block; flex-shrink: 0; pointer-events: none; }
 .app-header-sync-btn:hover:not(:disabled)  { opacity: 0.88; }
 .app-header-sync-btn:active:not(:disabled) { transform: scale(0.97); }
 .app-header-sync-btn:disabled              { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Animación spin para Loader2 ── */
-.spin {
-  animation: icon-spin 0.75s linear infinite;
+/* ── Spin loader ── */
+.spin { animation: icon-spin 0.75s linear infinite; }
+@keyframes icon-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ════════════════════════════════════════
+   AVATAR DROPDOWN
+════════════════════════════════════════ */
+.av-wrapper {
+  position: relative;
+  flex-shrink: 0;
 }
 
-@keyframes icon-spin {
-  from { transform: rotate(0deg);   }
-  to   { transform: rotate(360deg); }
+/* ── Trigger ── */
+.av-trigger {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 9px;
+  padding: 4px 8px 4px 4px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  height: 36px;
 }
 
-/* ════════════════════════════════
-   RESPONSIVE — TABLET (< 1024px)
-════════════════════════════════ */
+.av-trigger:hover,
+.av-trigger--open {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+}
+
+/* Círculo avatar */
+.av-avatar {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #000;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.av-chevron {
+  color: var(--text-muted);
+  display: flex; align-items: center;
+  transition: transform 0.2s cubic-bezier(.4,0,.2,1);
+}
+
+.av-trigger--open .av-chevron { transform: rotate(180deg); }
+
+/* ── Dropdown panel ── */
+.av-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  overflow: hidden;
+  z-index: 9999;
+  animation: av-down 0.18s cubic-bezier(.4,0,.2,1) both;
+}
+
+@keyframes av-down {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ── Cabecera del usuario ── */
+.av-user-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+}
+
+.av-user-avatar-lg {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #000;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.av-user-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.av-user-name {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Role badge ── */
+.av-role-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 7px; border-radius: 4px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+  align-self: flex-start;
+  border: 1px solid transparent;
+}
+
+.av-role-badge--admin      { color: #f59e0b; background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.25); }
+.av-role-badge--supervisor { color: #a78bfa; background: rgba(167,139,250,0.10); border-color: rgba(167,139,250,0.25); }
+.av-role-badge--picker     { color: #60a5fa; background: rgba(96,165,250,0.10);  border-color: rgba(96,165,250,0.25); }
+.av-role-badge--delivery   { color: #34d399; background: rgba(52,211,153,0.10);  border-color: rgba(52,211,153,0.25); }
+
+/* ── Divider ── */
+.av-divider { height: 1px; background: var(--border); margin: 0; }
+
+/* ── Items ── */
+.av-item {
+  width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 16px;
+  background: none; border: none; cursor: pointer;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.av-item svg { flex-shrink: 0; opacity: 0.7; }
+
+.av-item:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.av-item:hover svg { opacity: 1; }
+
+.av-item--danger        { color: var(--text-muted); }
+.av-item--danger:hover  { background: rgba(239,68,68,0.08); color: #f87171; }
+
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
 @media (max-width: 1023px) {
   .app-header { padding: 0 24px; }
 }
 
-/* ════════════════════════════════
-   RESPONSIVE — MOBILE (< 540px)
-════════════════════════════════ */
 @media (max-width: 540px) {
-  .app-header   { padding: 0 16px; height: 54px; }
-  .app-logo     { font-size: 14px; letter-spacing: 3px; }
-  .app-logo-sub { display: none; }
+  .app-header      { padding: 0 16px; height: 54px; }
+  .app-logo        { font-size: 14px; letter-spacing: 3px; }
+  .app-logo-sub    { display: none; }
 
-  /* Colapsar a solo icono */
   .app-header-btn-label { display: none; }
 
   .app-header-btn,
   .app-header-sync-btn {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    justify-content: center;
+    width: 36px; height: 36px;
+    padding: 0; justify-content: center;
   }
 }
 
-/* ════════════════════════════════
-   RESPONSIVE — SMALL (< 400px)
-════════════════════════════════ */
 @media (max-width: 400px) {
   .app-header-actions { gap: 6px; }
   .app-logo-dot       { display: none; }
