@@ -603,10 +603,11 @@ const AccountsPage = ({ user, tenant, onLogout }) => {
     if (conn) window.history.replaceState({}, "", window.location.pathname)
   }, [])
 
-  const handleConnect = () => {
-    setConnecting(true)
-    window.location.href = `${API_URL}/auth/mercadolibre`
-  }
+ const handleConnect = () => {
+  setConnecting(true)
+  const token = localStorage.getItem("app_token")
+  window.location.href = `${API_URL}/auth/mercadolibre?token=${token}`
+}
 
   const goToApp = () => {
     window.location.href = "/orders"
@@ -765,20 +766,6 @@ export default function AuthFlow() {
               ? <LoginForm    onSuccess={handleAuthSuccess} />
               : <RegisterForm onSuccess={handleAuthSuccess} />
             }
-
-            {/* Divider + ML directo */}
-            <div className="af-divider">
-              <div className="af-divider-line" />
-              <span className="af-divider-text">O</span>
-              <div className="af-divider-line" />
-            </div>
-
-            <button
-              className="af-btn af-btn-ml"
-              onClick={() => { window.location.href = `${API_URL}/auth/mercadolibre` }}
-            >
-              <IconLink /> CONECTAR CON MERCADO LIBRE
-            </button>
 
           </div>
         ) : (
