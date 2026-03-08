@@ -4,6 +4,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import OrderTable from "../components/OrderTable";
 import "./Orders.css";
 import Layout from "../components/Layout";
+import { isCancelled, isFinished } from "./Orders";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -12,17 +13,10 @@ const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("app_token")}`,
 });
 
-const STATUS_FILTERS = [
-  { key: "all",     label: "TODAS",     color: null      },
-  { key: "pending", label: "PENDIENTE", color: "#f59e0b" },
-  { key: "scanned", label: "ESCANEADO", color: "#3b82f6" },
-  { key: "packed",  label: "EMPACADO",  color: "#16a34a" },
-];
-
-const SHIPPING_FILTERS = [
-  { key: "all",           label: "TODAS",         color: null      },
-  { key: "por_despachar", label: "POR DESPACHAR", color: "#f59e0b" },
-  { key: "en_transito",   label: "EN TRÁNSITO",   color: "#3b82f6" },
+const HISTORY_FILTERS = [
+  { key: "all",       label: "TODAS",      color: null      },
+  { key: "cancelled", label: "CANCELADAS", color: "#f87171" },
+  { key: "finished",  label: "FINALIZADAS", color: "#16a34a" },
 ];
 
 const formatShort = (date) => {
@@ -30,27 +24,14 @@ const formatShort = (date) => {
   return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short" });
 };
 
-/* ── Helpers de estado ── */
-export const isCancelled = (o) =>
-  o.status === "cancelled" ||
-  o.shippingStatus === "cancelled" ||
-  o.shippingSubstatus === "cancelled";
-
-export const isFinished = (o) =>
-  o.shippingCategory === "finalizados" ||
-  o.shippingStatus === "delivered" ||
-  o.shippingSubstatus === "delivered";
-
-export default function Orders() {
-  const [orders, setOrders]                   = useState([]);
-  const [loading, setLoading]                 = useState(false);
-  const [syncing, setSyncing]                 = useState(false);
-  const [statusFilter, setStatusFilter]       = useState("all");
-  const [shippingFilter, setShippingFilter]   = useState("all");
-  const [search, setSearch]                   = useState("");
-  const [toast, setToast]                     = useState(null);
-  const [dateRange, setDateRange]             = useState([null, null]);
-  const [calendarOpen, setCalendarOpen]       = useState(false);
+export default function OrderHistory() {
+  const [orders, setOrders]             = useState([]);
+  const [loading, setLoading]           = useState(false);
+  const [historyFilter, setHistoryFilter] = useState("all");
+  const [search, setSearch]             = useState("");
+  const [toast, setToast]               = useState(null);
+  const [dateRange, setDateRange]       = useState([null, null]);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [startDate, endDate] = dateRange;
 
   const calendarRef = useRef(null);
@@ -92,52 +73,25 @@ export default function Orders() {
       const data = await res.json();
       setOrders(data);
     } catch {
-      showToast("Error cargando órdenes", "error");
+      showToast("Error cargando historial", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSync = async () => {
-    try {
-      setSyncing(true);
-      const res = await fetch(`${API_URL}/orders/sync`, {
-        method: "POST",
-        headers: getHeaders(),
-      });
-      if (!res.ok) throw new Error();
-      showToast("✓ Órdenes sincronizadas");
-      await loadOrders();
-    } catch {
-      showToast("Error al sincronizar", "error");
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   useEffect(() => { loadOrders(); }, []);
 
-  /* ── Solo activas — excluye canceladas y finalizadas ── */
-  const activeOrders = useMemo(
-    () => orders.filter((o) => !isCancelled(o) && !isFinished(o)),
+  /* ── Solo canceladas y finalizadas ── */
+  const historialOrders = useMemo(
+    () => orders.filter((o) => isCancelled(o) || isFinished(o)),
     [orders]
   );
 
-  const stats = useMemo(() => ({
-    total:   activeOrders.length,
-    pending: activeOrders.filter((o) => o.pickingStatus === "pending").length,
-    scanned: activeOrders.filter((o) => o.pickingStatus === "scanned").length,
-    packed:  activeOrders.filter((o) => o.pickingStatus === "packed").length,
-  }), [activeOrders]);
-
-  const shippingCounts = useMemo(() => {
-    const counts = { all: activeOrders.length };
-    SHIPPING_FILTERS.forEach((f) => {
-      if (f.key !== "all")
-        counts[f.key] = activeOrders.filter((o) => o.shippingCategory === f.key).length;
-    });
-    return counts;
-  }, [activeOrders]);
+  const counts = useMemo(() => ({
+    all:       historialOrders.length,
+    cancelled: historialOrders.filter(isCancelled).length,
+    finished:  historialOrders.filter(isFinished).length,
+  }), [historialOrders]);
 
   const toDateOnly = (value) => {
     if (!value) return null;
@@ -147,11 +101,12 @@ export default function Orders() {
   };
 
   const filtered = useMemo(() => {
-    return activeOrders
+    return historialOrders
       .filter((o) => {
-        const matchStatus   = statusFilter   === "all" || o.pickingStatus    === statusFilter;
-        const matchShipping = shippingFilter === "all" || o.shippingCategory === shippingFilter;
-        const matchSearch   =
+        if (historyFilter === "cancelled" && !isCancelled(o)) return false;
+        if (historyFilter === "finished"  && !isFinished(o))  return false;
+
+        const matchSearch =
           !search ||
           o.id?.toString().includes(search) ||
           o.displayIdentifier?.toString().includes(search) ||
@@ -168,13 +123,14 @@ export default function Orders() {
             if (endDate && matchDate && orderDate > toDateOnly(endDate)) matchDate = false;
           }
         }
-        return matchStatus && matchShipping && matchSearch && matchDate;
+
+        return matchSearch && matchDate;
       })
       .sort((a, b) =>
         new Date(b.lastUpdatedAt ?? b.createdAt ?? 0) -
         new Date(a.lastUpdatedAt ?? a.createdAt ?? 0)
       );
-  }, [activeOrders, statusFilter, shippingFilter, search, startDate, endDate]);
+  }, [historialOrders, historyFilter, search, startDate, endDate]);
 
   const dateLabel = useMemo(() => {
     if (!startDate && !endDate) return "FECHA";
@@ -182,44 +138,41 @@ export default function Orders() {
     return `${formatShort(startDate)} → ${formatShort(endDate)}`;
   }, [startDate, endDate]);
 
-  const hasActiveFilters = statusFilter !== "all" || shippingFilter !== "all" || search || startDate || endDate;
+  const hasActiveFilters = historyFilter !== "all" || search || startDate || endDate;
 
   const clearAll = () => {
-    setStatusFilter("all");
-    setShippingFilter("all");
+    setHistoryFilter("all");
     setSearch("");
     setDateRange([null, null]);
   };
 
   return (
     <div className="orders-root">
-      <Layout subtitle="ORDERS" theme={theme} onToggleTheme={toggleTheme} onSync={handleSync} syncing={syncing}>
+      <Layout subtitle="HISTORIAL" theme={theme} onToggleTheme={toggleTheme}>
         <main className="orders-main">
 
           <div className="orders-page-title">
-            <h1>ÓRDENES</h1>
-            <p>{activeOrders.length} órdenes activas · Mercado Libre</p>
+            <h1>HISTORIAL</h1>
+            <p>{historialOrders.length} órdenes · canceladas y finalizadas · Mercado Libre</p>
           </div>
 
-          <div className="orders-stats">
+          {/* ── Stats ── */}
+          <div className="orders-stats" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
             <div className="orders-stat-card">
               <span className="orders-stat-label">TOTAL</span>
-              <span className="orders-stat-value">{stats.total}</span>
+              <span className="orders-stat-value">{counts.all}</span>
             </div>
             <div className="orders-stat-card">
-              <span className="orders-stat-label">PENDIENTES</span>
-              <span className="orders-stat-value yellow">{stats.pending}</span>
+              <span className="orders-stat-label">CANCELADAS</span>
+              <span className="orders-stat-value" style={{ color: "#f87171" }}>{counts.cancelled}</span>
             </div>
             <div className="orders-stat-card">
-              <span className="orders-stat-label">ESCANEADAS</span>
-              <span className="orders-stat-value blue">{stats.scanned}</span>
-            </div>
-            <div className="orders-stat-card">
-              <span className="orders-stat-label">EMPACADAS</span>
-              <span className="orders-stat-value green">{stats.packed}</span>
+              <span className="orders-stat-label">FINALIZADAS</span>
+              <span className="orders-stat-value green">{counts.finished}</span>
             </div>
           </div>
 
+          {/* ── Toolbar ── */}
           <div className="orders-toolbar">
             <div className="orders-search-wrapper">
               <svg className="orders-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -234,32 +187,16 @@ export default function Orders() {
             </div>
 
             <div className="orders-filter-group">
-              <span className="filter-group-label">ESTADO</span>
+              <span className="filter-group-label">TIPO</span>
               <div className="orders-filters-scroll">
-                {STATUS_FILTERS.map((f) => (
+                {HISTORY_FILTERS.map((f) => (
                   <button key={f.key}
-                    className={`orders-filter-btn ${statusFilter === f.key ? `active-${f.key}` : ""}`}
-                    onClick={() => setStatusFilter(f.key)}
+                    className={`orders-filter-btn ${historyFilter === f.key ? `active-history-${f.key}` : ""}`}
+                    onClick={() => setHistoryFilter(f.key)}
                   >
                     {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
                     {f.label}
-                    {f.key !== "all" && <span className="filter-count">({stats[f.key]})</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="orders-filter-group">
-              <span className="filter-group-label">ENVÍO</span>
-              <div className="orders-filters-scroll">
-                {SHIPPING_FILTERS.map((f) => (
-                  <button key={f.key}
-                    className={`orders-filter-btn shipping ${shippingFilter === f.key ? "active-shipping" : ""}`}
-                    onClick={() => setShippingFilter(f.key)}
-                  >
-                    {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
-                    {f.label}
-                    <span className="filter-count">({shippingCounts[f.key] ?? 0})</span>
+                    <span className="filter-count">({counts[f.key] ?? 0})</span>
                   </button>
                 ))}
               </div>

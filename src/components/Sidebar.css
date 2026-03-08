@@ -29,7 +29,6 @@
   position: relative;
 }
 
-/* El main se desplaza según el ancho del sidebar */
 .layout-main {
   flex: 1;
   min-width: 0;
@@ -46,7 +45,7 @@
 ════════════════════════════════════════ */
 .sb {
   position: fixed;
-  top: 60px;          /* debajo del header */
+  top: 60px;
   left: 0;
   bottom: 0;
   width: var(--sb-width);
@@ -63,7 +62,6 @@
   width: var(--sb-width-collapsed);
 }
 
-/* ── Sección de nav items ── */
 .sb-nav {
   flex: 1;
   padding: 12px 0;
@@ -73,7 +71,6 @@
 }
 .sb-nav::-webkit-scrollbar { display: none; }
 
-/* ── Separador de sección ── */
 .sb-section-label {
   font-family: 'Space Mono', monospace;
   font-size: 8px;
@@ -93,7 +90,6 @@
   pointer-events: none;
 }
 
-/* ── Divisor ── */
 .sb-divider {
   height: 1px;
   background: var(--border);
@@ -129,13 +125,11 @@
   color: var(--text-primary);
 }
 
-/* Estado activo */
 .sb-item--active {
   color: var(--text-primary);
   background: var(--bg-elevated);
 }
 
-/* Línea lateral izquierda en activo */
 .sb-item--active::before {
   content: '';
   position: absolute;
@@ -145,7 +139,6 @@
   border-radius: 0 2px 2px 0;
 }
 
-/* ── Ícono dentro del item ── */
 .sb-item-icon {
   display: flex;
   align-items: center;
@@ -162,7 +155,6 @@
   background: var(--bg-hover);
 }
 
-/* Colores de acento por ítem */
 .sb-item--active.sb-item--amber .sb-item-icon { background: rgba(245,158,11,0.12); }
 .sb-item--active.sb-item--amber { color: #f59e0b; }
 .sb-item--active.sb-item--amber::before { background: #f59e0b; }
@@ -179,7 +171,6 @@
 .sb-item--active.sb-item--green { color: #34d399; }
 .sb-item--active.sb-item--green::before { background: #34d399; }
 
-/* ── Label del item ── */
 .sb-item-label {
   font-family: 'Space Mono', monospace;
   font-size: 10px;
@@ -193,7 +184,6 @@
   pointer-events: none;
 }
 
-/* ── Badge de notificación ── */
 .sb-badge {
   display: inline-flex;
   align-items: center;
@@ -217,7 +207,6 @@
   pointer-events: none;
 }
 
-/* ── Badge punto (collapsed) ── */
 .sb-badge-dot {
   position: absolute;
   top: 6px;
@@ -234,7 +223,6 @@
 
 .sb--collapsed .sb-item--has-badge .sb-badge-dot { opacity: 1; }
 
-/* ── Footer del sidebar (botón collapse) ── */
 .sb-footer {
   padding: 12px;
   border-top: 1px solid var(--border);
@@ -271,7 +259,6 @@
 
 .sb--collapsed .sb-collapse-icon { transform: rotate(180deg); }
 
-/* ── Tooltip en modo colapsado ── */
 .sb-item[data-tooltip] { position: relative; }
 
 .sb--collapsed .sb-item[data-tooltip]:hover::after {
@@ -330,17 +317,130 @@
   }
 
   .sb-backdrop { display: block; }
+  .sb-footer   { display: none;  }
 
-  .sb-footer { display: none; }
-
-  .sb-item-label { opacity: 1 !important; pointer-events: auto !important; }
-  .sb-badge      { opacity: 1 !important; transform: scale(1) !important; pointer-events: auto !important; }
-  .sb-badge-dot  { opacity: 0 !important; }
+  .sb-item-label  { opacity: 1 !important; pointer-events: auto !important; }
+  .sb-badge       { opacity: 1 !important; transform: scale(1) !important; pointer-events: auto !important; }
+  .sb-badge-dot   { opacity: 0 !important; }
   .sb-section-label { opacity: 1 !important; padding: 16px 20px 6px !important; }
 
-  /* El main no se desplaza en mobile */
   .layout-main,
   .layout-main--collapsed {
     margin-left: 0 !important;
+  }
+
+  /* Sub-items visibles en mobile */
+  .sb-group-children {
+    grid-template-rows: 0fr;
+  }
+  .sb-group--open .sb-group-children {
+    grid-template-rows: 1fr;
+  }
+}
+
+/* ════════════════════════════════════════
+   NAV GROUP — dropdown
+════════════════════════════════════════ */
+.sb-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-item--group {
+  justify-content: flex-start;
+}
+
+.sb-item--group .sb-item-label {
+  flex: 1;
+}
+
+/* Chevron animado */
+.sb-group-chevron {
+  display: flex;
+  align-items: center;
+  color: currentColor;
+  opacity: 0.5;
+  transition: transform 0.22s cubic-bezier(.4,0,.2,1), opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.sb-group-chevron--open {
+  transform: rotate(180deg);
+  opacity: 0.8;
+}
+
+.sb--collapsed .sb-group-chevron {
+  display: none;
+}
+
+/* Animación con grid-template-rows — requiere UN solo hijo directo */
+.sb-group-children {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(.4,0,.2,1);
+}
+
+.sb-group--open .sb-group-children {
+  grid-template-rows: 1fr;
+}
+
+/* El único hijo directo debe tener overflow:hidden */
+.sb-group-children > div {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar colapsado: forzar cierre */
+.sb--collapsed .sb-group-children {
+  grid-template-rows: 0fr !important;
+}
+
+/* ── Sub-item ── */
+.sb-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px 7px 38px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-align: left;
+  width: 100%;
+  transition: color 0.15s, background 0.15s;
+  border-radius: 0;
+}
+
+.sb-subitem:hover {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
+.sb-subitem-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.sb-subitem--active.sb-subitem--blue   { color: #60a5fa; }
+.sb-subitem--active.sb-subitem--purple { color: #a78bfa; }
+
+.sb-subitem--active .sb-subitem-dot {
+  opacity: 1;
+  transform: scale(1.5);
+}
+
+/* Mobile: sub-items siempre visibles cuando el grupo está abierto */
+@media (max-width: 767px) {
+  .sb-subitem {
+    padding-left: 44px;
   }
 }

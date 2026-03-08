@@ -2,14 +2,15 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { isTokenValid } from './utils/auth'
 
 // Páginas
-import Login      from './pages/Login'
-import Settings   from './pages/Settings'
-import Orders     from './pages/Orders'
-import ScanOrder  from './pages/ScanOrder'
+import Login from './pages/Login'
+import Settings from './pages/Settings'
+import Orders from './pages/Orders'
+import ScanOrder from './pages/ScanOrder'
 import AuthSuccess from './pages/AuthSuccess'
 
 import './App.css'
 import AdminPanel from './pages/AdminPanel'
+import OrderHistory from './pages/OrderHistory'
 
 /* ─────────────────────────────────────────
    GUARDS
@@ -34,7 +35,7 @@ function RoleRoute({ children, roles }) {
   }
 
   try {
-    const token   = localStorage.getItem('app_token')
+    const token = localStorage.getItem('app_token')
     const payload = JSON.parse(atob(token.split('.')[1]))
     if (!roles.includes(payload.role)) {
       // Autenticado pero sin permiso → redirigir a órdenes
@@ -54,7 +55,7 @@ function App() {
       <Routes>
 
         {/* ── Públicas ── */}
-        <Route path="/login"        element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/auth/success" element={<AuthSuccess />} />
 
         {/* ── Privadas — cualquier rol autenticado ── */}
@@ -66,6 +67,9 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route path="/order-history" element={
+          <PrivateRoute><OrderHistory /></PrivateRoute>
+        } />
         <Route
           path="/scan"
           element={
@@ -94,8 +98,8 @@ function App() {
         />
 
         {/* ── Raíz y comodín ── */}
-        <Route path="/"  element={<Navigate to="/orders" replace />} />
-        <Route path="*"  element={<Navigate to="/"       replace />} />
+        <Route path="/" element={<Navigate to="/orders" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </BrowserRouter>

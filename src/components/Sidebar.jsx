@@ -3,8 +3,7 @@ import { useState, useEffect, createContext, useContext } from 'react'
 import './Sidebar.css'
 
 /* ════════════════════════════════════════
-   CONTEXT — expone el estado del sidebar
-   a Header (para el hamburger en mobile)
+   CONTEXT
 ════════════════════════════════════════ */
 export const SidebarContext = createContext({
   collapsed:      false,
@@ -98,9 +97,9 @@ const NavItem = ({ icon, label, path, color = 'amber', badge, collapsed, onClick
     <button
       className={[
         'sb-item',
-        isActive  ? 'sb-item--active'    : '',
-        isActive  ? `sb-item--${color}`  : '',
-        badge     ? 'sb-item--has-badge' : '',
+        isActive ? 'sb-item--active'   : '',
+        isActive ? `sb-item--${color}` : '',
+        badge    ? 'sb-item--has-badge': '',
       ].join(' ')}
       onClick={handleClick}
       data-tooltip={collapsed ? label : undefined}
@@ -115,9 +114,74 @@ const NavItem = ({ icon, label, path, color = 'amber', badge, collapsed, onClick
 }
 
 /* ════════════════════════════════════════
+   NAV GROUP — dropdown con sub-items
+════════════════════════════════════════ */
+const ORDER_PATHS = ['/orders', '/order-history']
+
+const NavGroup = ({ icon, label, color = 'blue', collapsed, children }) => {
+  const location  = useLocation()
+  const isAnyActive = ORDER_PATHS.some(
+    (p) => location.pathname === p || location.pathname.startsWith(p + '/')
+  )
+  const [open, setOpen] = useState(isAnyActive)
+
+  // Si se navega a una subruta desde fuera, abre automáticamente
+  useEffect(() => {
+    if (isAnyActive) setOpen(true)
+  }, [location.pathname])
+
+  return (
+    <div className={`sb-group ${open ? 'sb-group--open' : ''}`}>
+      <button
+        className={[
+          'sb-item sb-item--group',
+          isAnyActive ? 'sb-item--active'   : '',
+          isAnyActive ? `sb-item--${color}` : '',
+        ].join(' ')}
+        onClick={() => setOpen((v) => !v)}
+        data-tooltip={collapsed ? label : undefined}
+        aria-label={label}
+      >
+        <span className="sb-item-icon">{icon}</span>
+        <span className="sb-item-label">{label}</span>
+        <span className={`sb-group-chevron ${open ? 'sb-group-chevron--open' : ''}`}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </button>
+
+      <div className="sb-group-children">
+        <div>{children}</div>
+      </div>
+    </div>
+  )
+}
+
+const NavSubItem = ({ label, path, color = 'blue' }) => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const isActive = location.pathname === path
+
+  return (
+    <button
+      className={[
+        'sb-subitem',
+        isActive ? 'sb-subitem--active'   : '',
+        isActive ? `sb-subitem--${color}` : '',
+      ].join(' ')}
+      onClick={() => navigate(path)}
+    >
+      <span className="sb-subitem-dot" />
+      <span className="sb-subitem-label">{label}</span>
+    </button>
+  )
+}
+
+/* ════════════════════════════════════════
    SIDEBAR
 ════════════════════════════════════════ */
-export default function Sidebar({ pendingDeliveryCount = 0, onAssignDelivery }) {
+export default function Sidebar({ pendingDeliveryCount = 0 }) {
   const { collapsed, mobileOpen, toggleCollapse, toggleMobile } = useSidebar()
   const session = getSession()
   const role    = session?.role ?? ''
@@ -128,15 +192,12 @@ export default function Sidebar({ pendingDeliveryCount = 0, onAssignDelivery }) 
 
   return (
     <>
-      {/* Backdrop mobile */}
-      {mobileOpen && (
-        <div className="sb-backdrop" onClick={toggleMobile} />
-      )}
+      {mobileOpen && <div className="sb-backdrop" onClick={toggleMobile} />}
 
       <aside className={[
         'sb',
-        collapsed   ? 'sb--collapsed'    : '',
-        mobileOpen  ? 'sb--mobile-open'  : '',
+        collapsed  ? 'sb--collapsed'   : '',
+        mobileOpen ? 'sb--mobile-open' : '',
       ].join(' ')}>
 
         <nav className="sb-nav">
@@ -152,13 +213,11 @@ export default function Sidebar({ pendingDeliveryCount = 0, onAssignDelivery }) 
             collapsed={collapsed}
           />
 
-          <NavItem
-            icon={<IconOrders />}
-            label="ÓRDENES"
-            path="/orders"
-            color="blue"
-            collapsed={collapsed}
-          />
+          {/* ── Dropdown Órdenes ── */}
+          <NavGroup icon={<IconOrders />} label="ÓRDENES" color="blue" collapsed={collapsed}>
+            <NavSubItem label="ACTIVAS"   path="/orders"        color="blue"   />
+            <NavSubItem label="HISTORIAL" path="/order-history" color="purple" />
+          </NavGroup>
 
           <NavItem
             icon={<IconScan />}
@@ -211,16 +270,13 @@ export default function Sidebar({ pendingDeliveryCount = 0, onAssignDelivery }) 
 
         </nav>
 
-        {/* ── Botón collapse (solo desktop) ── */}
         <div className="sb-footer">
           <button
             className="sb-collapse-btn"
             onClick={toggleCollapse}
             title={collapsed ? 'Expandir' : 'Colapsar'}
           >
-            <span className="sb-collapse-icon">
-              <IconChevronLeft />
-            </span>
+            <span className="sb-collapse-icon"><IconChevronLeft /></span>
           </button>
         </div>
 
