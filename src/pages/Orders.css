@@ -1084,3 +1084,232 @@
   border-color: #6b7280;
   color: #6b7280;
 }
+/* ══════════════════════════════════════════════════════
+   AGREGAR AL FINAL DE Orders.css
+   ══════════════════════════════════════════════════════ */
+
+/* ── Fila inferior: comuna + fecha ───────────────────── */
+.orders-filters-bottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Wrapper del dropdown ────────────────────────────── */
+.orders-dropdown-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ── Botón disparador ────────────────────────────────── */
+.orders-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--btn-border);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  min-width: 160px;
+  max-width: 220px;
+}
+
+.orders-dropdown-btn:hover {
+  border-color: var(--btn-hover-border);
+  color: var(--text-primary);
+}
+
+.orders-dropdown-btn.active {
+  border-color: #06b6d4;
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.orders-dropdown-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.orders-dropdown-clear {
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.orders-dropdown-clear:hover { opacity: 1; }
+
+.orders-dropdown-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  color: var(--text-faint);
+}
+.orders-dropdown-chevron.open { transform: rotate(180deg); }
+
+/* ── Panel del menú ──────────────────────────────────── */
+.orders-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 280px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-mid);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  animation: fadeUp 0.15s ease;
+  overflow: hidden;
+}
+
+/* ── Búsqueda interna ────────────────────────────────── */
+.orders-dropdown-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-faint);
+}
+
+.orders-dropdown-search {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+}
+
+.orders-dropdown-search::placeholder { color: var(--text-faint); }
+
+/* ── Lista de opciones ───────────────────────────────── */
+.orders-dropdown-list {
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-mid) transparent;
+  padding: 4px 0;
+}
+
+.orders-dropdown-list::-webkit-scrollbar       { width: 4px; }
+.orders-dropdown-list::-webkit-scrollbar-track  { background: transparent; }
+.orders-dropdown-list::-webkit-scrollbar-thumb  { background: var(--border-mid); border-radius: 4px; }
+
+/* ── Item individual ─────────────────────────────────── */
+.orders-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-secondary);
+  transition: background 0.12s, color 0.12s;
+}
+
+.orders-dropdown-item:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.orders-dropdown-item.selected {
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.07);
+}
+
+.orders-dropdown-item-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Todas las comunas" en monospace como los otros filtros */
+.orders-dropdown-item:first-child .orders-dropdown-item-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.orders-dropdown-item.selected:first-child .orders-dropdown-item-label {
+  color: #06b6d4;
+}
+
+.orders-dropdown-item-count {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 6px;
+}
+.orders-dropdown-item.selected .orders-dropdown-item-count {
+  border-color: rgba(6, 182, 212, 0.3);
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.orders-dropdown-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-faint);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 1px;
+}
+
+/* ── Hora de corte en el banner ──────────────────────── */
+.urgency-banner-cutoffs {
+  font-size: 9px;
+  opacity: 0.8;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 767px) {
+  .orders-filters-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .orders-dropdown-btn {
+    min-width: 140px;
+    max-width: 100%;
+  }
+
+  /* En mobile el menú se abre hacia la derecha si hay espacio, o se ensancha */
+  .orders-dropdown-menu {
+    min-width: 200px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+@media (max-width: 479px) {
+  .orders-dropdown-btn {
+    font-size: 9px;
+    padding: 5px 10px;
+  }
+}
