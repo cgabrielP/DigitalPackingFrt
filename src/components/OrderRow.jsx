@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './OrderRow.css'
 
 const STATUS_ML = {
@@ -18,6 +19,26 @@ const SHIPPING_CATEGORY = {
   finalizados:   { label: 'FINALIZADO',    cls: 'ship-done'    },
 }
 
+const URGENCY_CONFIG = {
+  overdue:  { label: 'ATRASADA',      cls: 'urg-overdue',  icon: '⚠' },
+  today:    { label: 'HOY',           cls: 'urg-today',    icon: '🕐' },
+  upcoming: { label: 'PRÓX. DÍAS',    cls: 'urg-upcoming', icon: '📅' },
+  none:     { label: 'SIN PROMESA',   cls: 'urg-none',     icon: '—'  },
+}
+
+// Razones por las que una orden puede no tener delivery_promise
+const NO_PROMISE_REASONS = {
+  me1:    'Envío gestionado por el vendedor (ME1) — ML no genera promesa automática.',
+  agency: 'Entrega en sucursal — el comprador retira, no aplica promesa de despacho.',
+  default:'ML aún no asignó una promesa. Puede ocurrir en órdenes muy recientes o sin método de envío confirmado.',
+}
+
+const resolveNoPromiseReason = (order) => {
+  if (order.logisticType === 'me1' || order.logisticType === 'custom') return NO_PROMISE_REASONS.me1
+  if (order.shippingDeliverTo === 'agency') return NO_PROMISE_REASONS.agency
+  return NO_PROMISE_REASONS.default
+}
+
 const formatDate = (dateStr) => {
   if (!dateStr) return '—'
   return new Date(dateStr).toLocaleDateString('es-CL', {
@@ -25,8 +46,64 @@ const formatDate = (dateStr) => {
   })
 }
 
-const OrderRow = ({ order, index }) => {
-  const mlStatus   = STATUS_ML[order.status]            || { label: order.status?.toUpperCase() || '—', cls: 'other' }
+const formatCutoffTime = (isoString) => {
+  if (!isoString) return null
+  const d = new Date(isoString)
+  if (isNaN(d)) return null
+  return d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+}
+
+// ── Tooltip flotante ──────────────────────────────────────────────────────────
+const Tooltip = ({ text, children }) => {
+  const [visible, setVisible] = useState(false)
+  return (
+    <span
+      className="urgency-tooltip-wrap"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      {children}
+      {visible && (
+        <span className="urgency-tooltip">
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
+// ── Badge de urgencia ─────────────────────────────────────────────────────────
+export const UrgencyBadge = ({ order }) => {
+  const urgency = order.deliveryUrgency ?? 'none'
+  const cfg     = URGENCY_CONFIG[urgency] ?? URGENCY_CONFIG.none
+  const cutoff  = formatCutoffTime(order.deliveryPromise)
+
+  if (urgency === 'none') {
+    return (
+      <Tooltip text={resolveNoPromiseReason(order)}>
+        <span className={`urgency-badge ${cfg.cls}`}>
+          <span className="urgency-badge__icon">{cfg.icon}</span>
+          {cfg.label}
+          <span className="urgency-badge__help">?</span>
+        </span>
+      </Tooltip>
+    )
+  }
+
+  return (
+    <span className={`urgency-badge ${cfg.cls}`}>
+      <span className="urgency-badge__icon">{cfg.icon}</span>
+      {cfg.label}
+      {cutoff && urgency !== 'upcoming' && (
+        <span className="urgency-badge__cutoff">· {cutoff}</span>
+      )}
+    </span>
+  )
+}
+
+// ── Row ───────────────────────────────────────────────────────────────────────
+const OrderRow = ({ order, index, showUrgency = false }) => {
+  const mlStatus   = STATUS_ML[order.status]             || { label: order.status?.toUpperCase() || '—', cls: 'other' }
   const pickStatus = STATUS_PICKING[order.pickingStatus] || { label: order.pickingStatus, cls: 'pending' }
   const shipCat    = SHIPPING_CATEGORY[order.shippingCategory]
 
@@ -85,6 +162,13 @@ const OrderRow = ({ order, index }) => {
           </span>
         ) : '—'}
       </td>
+
+      {/* Urgencia — solo cuando showUrgency=true */}
+      {showUrgency && (
+        <td className="td-urgency">
+          <UrgencyBadge order={order} />
+        </td>
+      )}
 
       {/* Estado picking */}
       <td>

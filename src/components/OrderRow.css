@@ -117,7 +117,125 @@
   color: #444;
   margin-right: -6px;
 }
+/* ══════════════════════════════════════════════════════
+   AGREGAR AL FINAL DE OrderRow.css
+   ══════════════════════════════════════════════════════ */
 
+/* ── Columna urgencia ────────────────────────────────── */
+.td-urgency   { white-space: nowrap; }
+.th-urgency   { white-space: nowrap; }
+
+/* ── Badge base ──────────────────────────────────────── */
+.urgency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.urgency-badge__icon   { font-size: 10px; }
+.urgency-badge__cutoff { opacity: 0.75; font-size: 8px; }
+
+/* ── Variantes ───────────────────────────────────────── */
+.urgency-badge.urg-overdue {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.urgency-badge.urg-today {
+  background: rgba(249, 115, 22, 0.12);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: #f97316;
+}
+
+.urgency-badge.urg-upcoming {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #8b5cf6;
+}
+
+.urgency-badge.urg-none {
+  background: rgba(107, 114, 128, 0.08);
+  border-color: rgba(107, 114, 128, 0.25);
+  color: #6b7280;
+  cursor: help; /* indica que tiene tooltip */
+}
+
+/* Icono "?" del tooltip */
+.urgency-badge__help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(107, 114, 128, 0.25);
+  font-size: 8px;
+  font-style: normal;
+  margin-left: 2px;
+  color: #9ca3af;
+}
+
+/* ── Tooltip ─────────────────────────────────────────── */
+.urgency-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.urgency-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+
+  width: 220px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--bg-elevated, #1e1e1e);
+  border: 1px solid var(--border, #333);
+  color: var(--text-secondary, #a1a1a1);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+  letter-spacing: 0;
+  font-weight: 400;
+  pointer-events: none;
+
+  /* Flechita */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--border, #333);
+  }
+}
+
+/* ── Highlight de fila atrasada ──────────────────────── */
+.order-row:has(.urg-overdue) {
+  background: rgba(239, 68, 68, 0.03);
+}
+.order-row:has(.urg-overdue):hover {
+  background: rgba(239, 68, 68, 0.07);
+}
+
+/* ── Método de envío en card ─────────────────────────── */
+.ocard__method {
+  font-size: 11px;
+  color: var(--text-secondary, #a1a1a1);
+}
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }

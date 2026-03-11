@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import OrderRow from './OrderRow'
+import { UrgencyBadge } from './OrderRow'
 import './OrderTable.css'
 
-// ─── Shared lookup tables (same as OrderRow) ─────────────────────────────────
 const STATUS_ML = {
   paid:      { label: 'PAGADO',     cls: 'paid'      },
   confirmed: { label: 'CONFIRMADO', cls: 'confirmed' },
@@ -29,7 +29,7 @@ const formatDate = (dateStr) => {
 }
 
 // ─── Mobile accordion card ───────────────────────────────────────────────────
-const OrderCard = ({ order, index }) => {
+const OrderCard = ({ order, index, showUrgency = false }) => {
   const [open, setOpen] = useState(false)
 
   const mlStatus   = STATUS_ML[order.status]              || { label: order.status?.toUpperCase() || '—', cls: 'other' }
@@ -52,10 +52,15 @@ const OrderCard = ({ order, index }) => {
         <span className="ocard__total">
           ${order.totalAmount?.toLocaleString('es-CL')}
         </span>
-        <span className={`status-badge ${mlStatus.cls}`}>
-          <span className="badge-dot" />
-          {mlStatus.label}
-        </span>
+        {/* En mobile mostramos el badge de urgencia en el header si aplica */}
+        {showUrgency ? (
+          <UrgencyBadge order={order} />
+        ) : (
+          <span className={`status-badge ${mlStatus.cls}`}>
+            <span className="badge-dot" />
+            {mlStatus.label}
+          </span>
+        )}
         <span className="ocard__chevron" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -97,6 +102,20 @@ const OrderCard = ({ order, index }) => {
 
           {/* Detail grid */}
           <dl className="ocard__grid">
+
+            {/* Si no es vista urgency, mostrar estado ML */}
+            {!showUrgency && (
+              <div className="ocard__field">
+                <dt>ESTADO ML</dt>
+                <dd>
+                  <span className={`status-badge ${mlStatus.cls}`}>
+                    <span className="badge-dot" />
+                    {mlStatus.label}
+                  </span>
+                </dd>
+              </div>
+            )}
+
             <div className="ocard__field">
               <dt>PICKING</dt>
               <dd>
@@ -119,10 +138,35 @@ const OrderCard = ({ order, index }) => {
               </dd>
             </div>
 
+            {/* Urgencia expandida en el detalle del card */}
+            {showUrgency && (
+              <div className="ocard__field ocard__field--full">
+                <dt>URGENCIA</dt>
+                <dd><UrgencyBadge order={order} /></dd>
+              </div>
+            )}
+
+            {/* Método de envío si existe */}
+            {order.shippingOptionName && (
+              <div className="ocard__field ocard__field--full">
+                <dt>MÉTODO</dt>
+                <dd className="ocard__method">{order.shippingOptionName}</dd>
+              </div>
+            )}
+
+            {/* Destino si existe */}
+            {order.receiverCity && (
+              <div className="ocard__field">
+                <dt>DESTINO</dt>
+                <dd>{order.receiverCity}</dd>
+              </div>
+            )}
+
             <div className="ocard__field ocard__field--full">
               <dt>FECHA</dt>
               <dd>{formatDate(order.createdAt)}</dd>
             </div>
+
           </dl>
 
         </div>
@@ -132,7 +176,7 @@ const OrderCard = ({ order, index }) => {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-const OrderTable = ({ orders }) => {
+const OrderTable = ({ orders, showUrgency = false }) => {
   if (!orders || orders.length === 0) {
     return (
       <div className="orders-empty">
@@ -158,14 +202,21 @@ const OrderTable = ({ orders }) => {
               <th>TOTAL</th>
               <th>PRODUCTOS</th>
               <th>ESTADO ML</th>
-              <th>ENVIO</th>
+              <th>ENVÍO</th>
+              {/* Columna urgencia — aparece dinámicamente */}
+              {showUrgency && <th className="th-urgency">URGENCIA</th>}
               <th>PICKING</th>
               <th>FECHA</th>
             </tr>
           </thead>
           <tbody>
             {orders.map((order, i) => (
-              <OrderRow key={order.id} order={order} index={i} />
+              <OrderRow
+                key={order.id}
+                order={order}
+                index={i}
+                showUrgency={showUrgency}
+              />
             ))}
           </tbody>
         </table>
@@ -174,7 +225,12 @@ const OrderTable = ({ orders }) => {
       {/* Mobile accordion */}
       <div className="orders-cards orders-cards--mobile">
         {orders.map((order, i) => (
-          <OrderCard key={order.id} order={order} index={i} />
+          <OrderCard
+            key={order.id}
+            order={order}
+            index={i}
+            showUrgency={showUrgency}
+          />
         ))}
       </div>
     </>

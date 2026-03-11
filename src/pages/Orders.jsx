@@ -25,9 +25,28 @@ const SHIPPING_FILTERS = [
   { key: "en_transito",   label: "EN TRÁNSITO",   color: "#3b82f6" },
 ];
 
+// Urgencia — solo aplica cuando shippingFilter === "por_despachar"
+const URGENCY_FILTERS = [
+  { key: "all",      label: "TODAS",          color: null      },
+  { key: "overdue",  label: "ATRASADAS",      color: "#ef4444" },
+  { key: "today",    label: "HOY",            color: "#f97316" },
+  { key: "upcoming", label: "PRÓXIMOS DÍAS",  color: "#8b5cf6" },
+  { key: "none",     label: "SIN PROMESA",    color: "#6b7280" },
+];
+
+// Peso para ordenar por urgencia: menor número = más urgente
+const URGENCY_ORDER = { overdue: 0, today: 1, upcoming: 2, none: 3 };
+
 const formatShort = (date) => {
   if (!date) return "";
   return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short" });
+};
+
+const formatDeliveryPromise = (isoString) => {
+  if (!isoString) return null;
+  const d = new Date(isoString);
+  if (isNaN(d)) return null;
+  return d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
 };
 
 /* ── Helpers de estado ── */
@@ -47,6 +66,7 @@ export default function Orders() {
   const [syncing, setSyncing]                 = useState(false);
   const [statusFilter, setStatusFilter]       = useState("all");
   const [shippingFilter, setShippingFilter]   = useState("all");
+  const [urgencyFilter, setUrgencyFilter]     = useState("all");
   const [search, setSearch]                   = useState("");
   const [toast, setToast]                     = useState(null);
   const [dateRange, setDateRange]             = useState([null, null]);
@@ -66,6 +86,12 @@ export default function Orders() {
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
+  // Resetear urgency filter cuando se cambia el filtro de envío
+  const handleShippingFilter = (key) => {
+    setShippingFilter(key);
+    setUrgencyFilter("all");
+  };
 
   useEffect(() => {
     if (!calendarOpen) return;
@@ -91,6 +117,21 @@ export default function Orders() {
       if (res.status === 401) { logout(); return; }
       const data = await res.json();
       setOrders(data);
+      // DEBUG — pegalo justo después del setOrders(data) en loadOrders
+console.table(
+  data
+    .filter(o => o.shippingCategory === "por_despachar" && o.deliveryPromise)
+    .map(o => ({
+      id:             o.displayIdentifier,
+      deliveryUrgency: o.deliveryUrgency,          // lo que mandó el backend
+      deliveryPromise: o.deliveryPromise,           // string raw
+      promiseParsed:   new Date(o.deliveryPromise).toISOString(),  // cómo lo parsea el browser
+      browserNow:      new Date().toISOString(),    // ahora en el browser
+      diffMinutes:     Math.round(
+        (new Date(o.deliveryPromise) - new Date()) / 60000
+      ),                                            // positivo = no vencido, negativo = vencido
+    }))
+);
     } catch {
       showToast("Error cargando órdenes", "error");
     } finally {
@@ -117,7 +158,7 @@ export default function Orders() {
 
   useEffect(() => { loadOrders(); }, []);
 
-  /* ── Solo activas — excluye canceladas y finalizadas ── */
+  /* ── Solo activas ── */
   const activeOrders = useMemo(
     () => orders.filter((o) => !isCancelled(o) && !isFinished(o)),
     [orders]
@@ -139,6 +180,17 @@ export default function Orders() {
     return counts;
   }, [activeOrders]);
 
+  // Conteos de urgencia — solo sobre las "por_despachar"
+  const urgencyCounts = useMemo(() => {
+    const porDespachar = activeOrders.filter((o) => o.shippingCategory === "por_despachar");
+    const counts = { all: porDespachar.length };
+    URGENCY_FILTERS.forEach((f) => {
+      if (f.key !== "all")
+        counts[f.key] = porDespachar.filter((o) => o.deliveryUrgency === f.key).length;
+    });
+    return counts;
+  }, [activeOrders]);
+
   const toDateOnly = (value) => {
     if (!value) return null;
     const d = new Date(value);
@@ -147,10 +199,16 @@ export default function Orders() {
   };
 
   const filtered = useMemo(() => {
+    const isPorDespachar = shippingFilter === "por_despachar";
+
     return activeOrders
       .filter((o) => {
         const matchStatus   = statusFilter   === "all" || o.pickingStatus    === statusFilter;
         const matchShipping = shippingFilter === "all" || o.shippingCategory === shippingFilter;
+
+        // Filtro de urgencia — solo activo en "por_despachar"
+        const matchUrgency  = !isPorDespachar || urgencyFilter === "all" || o.deliveryUrgency === urgencyFilter;
+
         const matchSearch   =
           !search ||
           o.id?.toString().includes(search) ||
@@ -168,13 +226,29 @@ export default function Orders() {
             if (endDate && matchDate && orderDate > toDateOnly(endDate)) matchDate = false;
           }
         }
-        return matchStatus && matchShipping && matchSearch && matchDate;
+
+        return matchStatus && matchShipping && matchUrgency && matchSearch && matchDate;
       })
-      .sort((a, b) =>
-        new Date(b.lastUpdatedAt ?? b.createdAt ?? 0) -
-        new Date(a.lastUpdatedAt ?? a.createdAt ?? 0)
-      );
-  }, [activeOrders, statusFilter, shippingFilter, search, startDate, endDate]);
+      .sort((a, b) => {
+        // En "por_despachar" ordenar por urgencia primero, luego por deliveryPromise
+        if (isPorDespachar) {
+          const urgA = URGENCY_ORDER[a.deliveryUrgency ?? "none"] ?? 3;
+          const urgB = URGENCY_ORDER[b.deliveryUrgency ?? "none"] ?? 3;
+          if (urgA !== urgB) return urgA - urgB;
+
+          // Dentro del mismo nivel de urgencia, ordenar por hora de corte (más próxima primero)
+          const promA = a.deliveryPromise ? new Date(a.deliveryPromise).getTime() : Infinity;
+          const promB = b.deliveryPromise ? new Date(b.deliveryPromise).getTime() : Infinity;
+          return promA - promB;
+        }
+
+        // Default: más reciente primero
+        return (
+          new Date(b.lastUpdatedAt ?? b.createdAt ?? 0) -
+          new Date(a.lastUpdatedAt ?? a.createdAt ?? 0)
+        );
+      });
+  }, [activeOrders, statusFilter, shippingFilter, urgencyFilter, search, startDate, endDate]);
 
   const dateLabel = useMemo(() => {
     if (!startDate && !endDate) return "FECHA";
@@ -182,14 +256,19 @@ export default function Orders() {
     return `${formatShort(startDate)} → ${formatShort(endDate)}`;
   }, [startDate, endDate]);
 
-  const hasActiveFilters = statusFilter !== "all" || shippingFilter !== "all" || search || startDate || endDate;
+  const hasActiveFilters =
+    statusFilter !== "all" || shippingFilter !== "all" ||
+    urgencyFilter !== "all" || search || startDate || endDate;
 
   const clearAll = () => {
     setStatusFilter("all");
     setShippingFilter("all");
+    setUrgencyFilter("all");
     setSearch("");
     setDateRange([null, null]);
   };
+
+  const isPorDespachar = shippingFilter === "por_despachar";
 
   return (
     <div className="orders-root">
@@ -219,6 +298,39 @@ export default function Orders() {
               <span className="orders-stat-value green">{stats.packed}</span>
             </div>
           </div>
+
+          {/* Banner de urgencia — solo visible cuando hay pedidos atrasados u "hoy" */}
+          {(urgencyCounts.overdue > 0 || urgencyCounts.today > 0) && (
+            <div className="orders-urgency-banner">
+              {urgencyCounts.overdue > 0 && (
+                <button
+                  className={`urgency-banner-chip overdue ${isPorDespachar && urgencyFilter === "overdue" ? "active" : ""}`}
+                  onClick={() => { handleShippingFilter("por_despachar"); setUrgencyFilter("overdue"); }}
+                >
+                  <span className="urgency-dot" />
+                  {urgencyCounts.overdue} atrasada{urgencyCounts.overdue !== 1 ? "s" : ""}
+                </button>
+              )}
+              {urgencyCounts.today > 0 && (
+                <button
+                  className={`urgency-banner-chip today ${isPorDespachar && urgencyFilter === "today" ? "active" : ""}`}
+                  onClick={() => { handleShippingFilter("por_despachar"); setUrgencyFilter("today"); }}
+                >
+                  <span className="urgency-dot" />
+                  {urgencyCounts.today} para despachar hoy
+                </button>
+              )}
+              {urgencyCounts.upcoming > 0 && (
+                <button
+                  className={`urgency-banner-chip upcoming ${isPorDespachar && urgencyFilter === "upcoming" ? "active" : ""}`}
+                  onClick={() => { handleShippingFilter("por_despachar"); setUrgencyFilter("upcoming"); }}
+                >
+                  <span className="urgency-dot" />
+                  {urgencyCounts.upcoming} próximos días
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="orders-toolbar">
             <div className="orders-search-wrapper">
@@ -255,7 +367,7 @@ export default function Orders() {
                 {SHIPPING_FILTERS.map((f) => (
                   <button key={f.key}
                     className={`orders-filter-btn shipping ${shippingFilter === f.key ? "active-shipping" : ""}`}
-                    onClick={() => setShippingFilter(f.key)}
+                    onClick={() => handleShippingFilter(f.key)}
                   >
                     {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
                     {f.label}
@@ -264,6 +376,25 @@ export default function Orders() {
                 ))}
               </div>
             </div>
+
+            {/* Filtro de urgencia — solo visible en "por_despachar" */}
+            {isPorDespachar && (
+              <div className="orders-filter-group urgency-group">
+                <span className="filter-group-label">URGENCIA</span>
+                <div className="orders-filters-scroll">
+                  {URGENCY_FILTERS.map((f) => (
+                    <button key={f.key}
+                      className={`orders-filter-btn urgency ${urgencyFilter === f.key ? `active-urgency-${f.key}` : ""}`}
+                      onClick={() => setUrgencyFilter(f.key)}
+                    >
+                      {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
+                      {f.label}
+                      <span className="filter-count">({urgencyCounts[f.key] ?? 0})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="orders-filter-group">
               <span className="filter-group-label">FECHA</span>
@@ -304,6 +435,11 @@ export default function Orders() {
               <span className="active-filters-info">
                 {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
                 {(startDate || endDate) && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>· {dateLabel}</span>}
+                {isPorDespachar && urgencyFilter !== "all" && (
+                  <span style={{ color: URGENCY_FILTERS.find(f => f.key === urgencyFilter)?.color, marginLeft: 6 }}>
+                    · {URGENCY_FILTERS.find(f => f.key === urgencyFilter)?.label}
+                  </span>
+                )}
               </span>
               <button className="active-filters-clear" onClick={clearAll}>Limpiar filtros</button>
             </div>
@@ -320,7 +456,7 @@ export default function Orders() {
                 <p>SIN RESULTADOS</p>
               </div>
             ) : (
-              <OrderTable orders={filtered}/>
+              <OrderTable orders={filtered} showUrgency={isPorDespachar} />
             )}
           </div>
 
