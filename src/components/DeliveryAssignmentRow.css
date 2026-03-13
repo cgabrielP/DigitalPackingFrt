@@ -1,0 +1,110 @@
+.dar-row {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  animation: dar-up 0.3s ease both;
+}
+.dar-row:last-child { border-bottom: none; }
+.dar-row:hover      { background: var(--bg-elevated); }
+
+.dar-row td {
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* Fijar botón unassign siempre visible */
+.dar-row td:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--bg-surface);
+  z-index: 1;
+}
+.dar-row:hover td:last-child {
+  background: var(--bg-elevated);
+}
+
+.dar-id   { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-muted); }
+.dar-date { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-muted); }
+.dar-city { color: var(--text-muted); font-size: 12px; }
+
+.dar-buyer {
+  font-weight: 500;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Items */
+.dar-items { display: flex; align-items: center; gap: 4px; }
+.dar-thumb {
+  width: 28px; height: 28px; border-radius: 4px;
+  object-fit: cover; border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+.dar-thumb-placeholder {
+  width: 28px; height: 28px; border-radius: 4px;
+  border: 1px solid var(--border); background: var(--bg-elevated);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--text-faint);
+  font-family: 'Space Mono', monospace;
+}
+
+/* Badge de estado */
+.dar-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 4px; border: 1px solid;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 1px;
+}
+.dar-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.dar-badge--delivered { color: #34d399; background: #34d39912; border-color: #34d39930; }
+.dar-badge--shipped   { color: #60a5fa; background: #60a5fa12; border-color: #60a5fa30; }
+.dar-badge--failed    { color: #f87171; background: #f8717112; border-color: #f8717130; }
+.dar-badge--other     { color: var(--text-faint); background: var(--bg-elevated); border-color: var(--border); }
+
+/* Delivery user cell */
+.dar-user-cell { display: flex; align-items: center; gap: 8px; }
+.dar-avatar {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: rgba(52,211,153,0.15); color: #34d399;
+  font-family: 'Space Mono', monospace; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* Monto */
+.dar-payment { font-family: 'Space Mono', monospace; font-size: 12px; }
+.dar-amount      { color: var(--text-muted); }
+.dar-amount--paid { color: #34d399; }
+
+/* Notas */
+.dar-notes-text {
+  max-width: 100px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; color: var(--text-muted);
+}
+
+/* Botón quitar */
+.dar-btn-unassign {
+  width: 26px; height: 26px; border-radius: 6px;
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  color: #f87171; font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.dar-btn-unassign:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.4); }
+
+/* Responsive — ocultar columnas menos críticas */
+@media (max-width: 1024px) {
+  .dar-row td.dar-date  { display: none; }
+  .dar-row td.dar-notes { display: none; }
+}
+@media (max-width: 768px) {
+  .dar-row td.dar-city { display: none; }
+}
+
+@keyframes dar-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

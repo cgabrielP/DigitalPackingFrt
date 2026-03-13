@@ -11,6 +11,8 @@ import AuthSuccess from './pages/AuthSuccess'
 import './App.css'
 import AdminPanel from './pages/AdminPanel'
 import OrderHistory from './pages/OrderHistory'
+import AssignDelivery from './pages/AssignDelivery'
+import MyDeliveries from './pages/MyDeliveries'
 
 /* ─────────────────────────────────────────
    GUARDS
@@ -96,7 +98,22 @@ function App() {
             </RoleRoute>
           }
         />
-
+        <Route
+          path="/assign-delivery"
+          element={
+            <RoleRoute roles={['ADMIN', 'SUPERVISOR']}>
+              <AssignDelivery />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/my-deliveries"
+          element={
+            <RoleRoute roles={['DELIVERY']}>
+              <MyDeliveries />
+            </RoleRoute>
+          }
+        />
         {/* ── Raíz y comodín ── */}
         <Route path="/" element={<Navigate to="/orders" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />

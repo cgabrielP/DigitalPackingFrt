@@ -6,10 +6,10 @@ import './Sidebar.css'
    CONTEXT
 ════════════════════════════════════════ */
 export const SidebarContext = createContext({
-  collapsed:      false,
-  mobileOpen:     false,
-  toggleCollapse: () => {},
-  toggleMobile:   () => {},
+  collapsed: false,
+  mobileOpen: false,
+  toggleCollapse: () => { },
+  toggleMobile: () => { },
 })
 
 export const useSidebar = () => useContext(SidebarContext)
@@ -27,56 +27,56 @@ const getSession = () => {
 ════════════════════════════════════════ */
 const IconDashboard = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <rect x="3" y="3" width="7" height="7" rx="1"/>
-    <rect x="14" y="3" width="7" height="7" rx="1"/>
-    <rect x="3" y="14" width="7" height="7" rx="1"/>
-    <rect x="14" y="14" width="7" height="7" rx="1"/>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
   </svg>
 )
 
 const IconOrders = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-    <rect x="9" y="3" width="6" height="4" rx="1"/>
-    <line x1="9" y1="12" x2="15" y2="12"/>
-    <line x1="9" y1="16" x2="13" y2="16"/>
+    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+    <rect x="9" y="3" width="6" height="4" rx="1" />
+    <line x1="9" y1="12" x2="15" y2="12" />
+    <line x1="9" y1="16" x2="13" y2="16" />
   </svg>
 )
 
 const IconScan = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
-    <line x1="7" y1="12" x2="17" y2="12"/>
+    <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
+    <line x1="7" y1="12" x2="17" y2="12" />
   </svg>
 )
 
 const IconTruck = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <rect x="1" y="3" width="15" height="13" rx="1"/>
-    <path d="M16 8h4l3 4v4h-7V8z"/>
-    <circle cx="5.5" cy="18.5" r="2.5"/>
-    <circle cx="18.5" cy="18.5" r="2.5"/>
+    <rect x="1" y="3" width="15" height="13" rx="1" />
+    <path d="M16 8h4l3 4v4h-7V8z" />
+    <circle cx="5.5" cy="18.5" r="2.5" />
+    <circle cx="18.5" cy="18.5" r="2.5" />
   </svg>
 )
 
 const IconUsers = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-    <circle cx="9" cy="7" r="4"/>
-    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
   </svg>
 )
 
 const IconSettings = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
-    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
   </svg>
 )
 
 const IconChevronLeft = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-    <polyline points="15 18 9 12 15 6"/>
+    <polyline points="15 18 9 12 15 6" />
   </svg>
 )
 
@@ -97,9 +97,9 @@ const NavItem = ({ icon, label, path, color = 'amber', badge, collapsed, onClick
     <button
       className={[
         'sb-item',
-        isActive ? 'sb-item--active'   : '',
+        isActive ? 'sb-item--active' : '',
         isActive ? `sb-item--${color}` : '',
-        badge    ? 'sb-item--has-badge': '',
+        badge ? 'sb-item--has-badge' : '',
       ].join(' ')}
       onClick={handleClick}
       data-tooltip={collapsed ? label : undefined}
@@ -119,7 +119,7 @@ const NavItem = ({ icon, label, path, color = 'amber', badge, collapsed, onClick
 const ORDER_PATHS = ['/orders', '/order-history']
 
 const NavGroup = ({ icon, label, color = 'blue', collapsed, children }) => {
-  const location  = useLocation()
+  const location = useLocation()
   const isAnyActive = ORDER_PATHS.some(
     (p) => location.pathname === p || location.pathname.startsWith(p + '/')
   )
@@ -135,7 +135,7 @@ const NavGroup = ({ icon, label, color = 'blue', collapsed, children }) => {
       <button
         className={[
           'sb-item sb-item--group',
-          isAnyActive ? 'sb-item--active'   : '',
+          isAnyActive ? 'sb-item--active' : '',
           isAnyActive ? `sb-item--${color}` : '',
         ].join(' ')}
         onClick={() => setOpen((v) => !v)}
@@ -146,7 +146,7 @@ const NavGroup = ({ icon, label, color = 'blue', collapsed, children }) => {
         <span className="sb-item-label">{label}</span>
         <span className={`sb-group-chevron ${open ? 'sb-group-chevron--open' : ''}`}>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <polyline points="6 9 12 15 18 9"/>
+            <polyline points="6 9 12 15 18 9" />
           </svg>
         </span>
       </button>
@@ -167,7 +167,7 @@ const NavSubItem = ({ label, path, color = 'blue' }) => {
     <button
       className={[
         'sb-subitem',
-        isActive ? 'sb-subitem--active'   : '',
+        isActive ? 'sb-subitem--active' : '',
         isActive ? `sb-subitem--${color}` : '',
       ].join(' ')}
       onClick={() => navigate(path)}
@@ -184,11 +184,11 @@ const NavSubItem = ({ label, path, color = 'blue' }) => {
 export default function Sidebar({ pendingDeliveryCount = 0 }) {
   const { collapsed, mobileOpen, toggleCollapse, toggleMobile } = useSidebar()
   const session = getSession()
-  const role    = session?.role ?? ''
+  const role = session?.role ?? ''
 
-  const isAdmin      = role === 'ADMIN'
+  const isAdmin = role === 'ADMIN'
   const isSupervisor = role === 'SUPERVISOR'
-  const canAssign    = isAdmin || isSupervisor
+  const canAssign = isAdmin || isSupervisor
 
   return (
     <>
@@ -196,7 +196,7 @@ export default function Sidebar({ pendingDeliveryCount = 0 }) {
 
       <aside className={[
         'sb',
-        collapsed  ? 'sb--collapsed'   : '',
+        collapsed ? 'sb--collapsed' : '',
         mobileOpen ? 'sb--mobile-open' : '',
       ].join(' ')}>
 
@@ -215,7 +215,7 @@ export default function Sidebar({ pendingDeliveryCount = 0 }) {
 
           {/* ── Dropdown Órdenes ── */}
           <NavGroup icon={<IconOrders />} label="ÓRDENES" color="blue" collapsed={collapsed}>
-            <NavSubItem label="ACTIVAS"   path="/orders"        color="blue"   />
+            <NavSubItem label="ACTIVAS" path="/orders" color="blue" />
             <NavSubItem label="HISTORIAL" path="/order-history" color="purple" />
           </NavGroup>
 
@@ -239,6 +239,21 @@ export default function Sidebar({ pendingDeliveryCount = 0 }) {
                 path="/assign-delivery"
                 color="purple"
                 badge={pendingDeliveryCount}
+                collapsed={collapsed}
+              />
+            </>
+          )}
+          {/* ── Delivery — solo rol DELIVERY ── */}
+          {role === 'DELIVERY' && (
+            <>
+              <div className="sb-divider" />
+              <p className="sb-section-label">MIS ENTREGAS</p>
+
+              <NavItem
+                icon={<IconTruck />}
+                label="MIS ENTREGAS"
+                path="/my-deliveries"
+                color="green"
                 collapsed={collapsed}
               />
             </>

@@ -352,6 +352,11 @@
   animation: ap-rotate 0.7s linear infinite;
   flex-shrink: 0;
 }
+.ap-section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 40px 0 32px;
+}
 
 .ap-spin--lg { width: 28px; height: 28px; border-width: 3px; }
 

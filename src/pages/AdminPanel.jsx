@@ -211,9 +211,8 @@ const CreateUserModal = ({ onClose, onCreated }) => {
             {ROLES.map((r) => (
               <button
                 key={r.key}
-                className={`ap-role-btn ap-role-btn--${r.color} ${
-                  form.role === r.key ? "ap-role-btn--active" : ""
-                }`}
+                className={`ap-role-btn ap-role-btn--${r.color} ${form.role === r.key ? "ap-role-btn--active" : ""
+                  }`}
                 onClick={() => setForm((f) => ({ ...f, role: r.key }))}
                 type="button"
               >
@@ -251,6 +250,10 @@ export default function AdminPanel() {
   const [showModal, setShowModal] = useState(false);
   const [notice, setNotice] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [paymentConfig, setPaymentConfig] = useState(null)
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [savingConfig, setSavingConfig] = useState(false)
+  const [loadingConfig, setLoadingConfig] = useState(true)
   const navigate = useNavigate();
 
   /* ── Tema (sincronizado con Orders) ── */
@@ -288,9 +291,22 @@ export default function AdminPanel() {
     }
   };
 
+  const loadPaymentConfig = async () => {
+    try {
+      const res = await fetch(`${API_URL}/delivery/config`, { headers: getHeaders() })
+      const data = await res.json()
+      if (res.ok && data.amountPerDelivery) {
+        setPaymentConfig(data)
+        setPaymentAmount(data.amountPerDelivery.toString())
+      }
+    } catch { /* silencioso */ }
+    finally { setLoadingConfig(false) }
+  }
+
   useEffect(() => {
-    loadUsers();
-  }, []);
+    loadUsers()
+    loadPaymentConfig()
+  }, [])
 
   const handleCreated = (user) => {
     setUsers((prev) => [...prev, user]);
@@ -320,7 +336,26 @@ export default function AdminPanel() {
       setDeleting(null);
     }
   };
-
+const handleSaveConfig = async () => {
+  if (!paymentAmount || isNaN(paymentAmount)) return
+  setSavingConfig(true)
+  try {
+    const res  = await fetch(`${API_URL}/delivery/config`, {
+      method:  'POST',
+      headers: getHeaders(),
+      body:    JSON.stringify({ amountPerDelivery: Number(paymentAmount) }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    setPaymentConfig(data)
+    setNotice({ type: 'success', msg: 'Configuración de pago guardada' })
+    setTimeout(() => setNotice(null), 3000)
+  } catch {
+    setNotice({ type: 'error', msg: 'No se pudo guardar la configuración' })
+  } finally {
+    setSavingConfig(false)
+  }
+}
   const byRole = ROLES.reduce((acc, r) => {
     acc[r.key] = users.filter((u) => u.role === r.key);
     return acc;
@@ -436,11 +471,10 @@ export default function AdminPanel() {
                         </td>
                         <td>
                           <span
-                            className={`ap-badge ${
-                              user.isActive
-                                ? "ap-badge--green"
-                                : "ap-badge--muted"
-                            }`}
+                            className={`ap-badge ${user.isActive
+                              ? "ap-badge--green"
+                              : "ap-badge--muted"
+                              }`}
                           >
                             {user.isActive ? "ACTIVO" : "INACTIVO"}
                           </span>
@@ -468,9 +502,58 @@ export default function AdminPanel() {
                   })}
                 </tbody>
               </table>
+              
             </div>
+            
           )}
+           {/* ── Config de pago delivery ── */}
+<div className="ap-section-divider" />
+<header className="ap-header" style={{ marginTop: 32 }}>
+  <div>
+    <p className="ap-header-eyebrow">DELIVERY</p>
+    <h2 className="ap-header-title" style={{ fontSize: 18 }}>PAGO POR ENTREGA</h2>
+    <p className="ap-header-sub">
+      Monto fijo que se le paga al delivery por cada pedido con estado <strong>delivered</strong>
+    </p>
+  </div>
+</header>
+
+<div className="ap-table-wrapper" style={{ padding: '20px 24px' }}>
+  {loadingConfig ? (
+    <span className="ap-spin" />
+  ) : (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+      <div className="ap-field" style={{ margin: 0, flex: '1 1 200px' }}>
+        <label className="ap-label">MONTO POR PEDIDO ENTREGADO (CLP)</label>
+        <input
+          className="ap-input"
+          type="number"
+          min="0"
+          placeholder="ej: 1500"
+          value={paymentAmount}
+          onChange={e => setPaymentAmount(e.target.value)}
+        />
+      </div>
+      <button
+        className="ap-btn-primary ap-btn-primary--sm"
+        onClick={handleSaveConfig}
+        disabled={savingConfig || !paymentAmount}
+        style={{ marginBottom: 1 }}
+      >
+        {savingConfig && <span className="ap-spin" />}
+        {savingConfig ? 'GUARDANDO...' : paymentConfig ? 'ACTUALIZAR' : 'GUARDAR'}
+      </button>
+    </div>
+  )}
+
+  {paymentConfig && (
+    <p style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Space Mono', monospace" }}>
+      Config actual: <strong style={{ color: '#34d399' }}>${Number(paymentConfig.amountPerDelivery).toLocaleString('es-CL')} CLP</strong> por entrega
+    </p>
+  )}
+</div>
         </div>
+       
       </Layout>
       {/* ── Modal ── */}
       {showModal && (
