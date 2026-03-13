@@ -70,13 +70,14 @@ export default function AssignDelivery() {
   const [startDate, endDate] = dateRange
 
   // ── Refs ──
-  const inputRef         = useRef(null)
-  const scannerBuffer    = useRef('')
-  const scannerTimer     = useRef(null)
-  const calendarRef      = useRef(null)
-  const calendarBtn      = useRef(null)
-  const cityRef          = useRef(null)
-  const deliveryFilterRef = useRef(null)  // ← NUEVO
+  const inputRef          = useRef(null)
+  const scannerBuffer     = useRef('')
+  const scannerTimer      = useRef(null)
+  const calendarRef       = useRef(null)
+  const calendarBtn       = useRef(null)
+  const cityRef           = useRef(null)
+  const deliveryFilterRef = useRef(null)
+  const submitCodeRef     = useRef(null)  // ← siempre apunta al submitCode más reciente
 
   const session = getSession()
 
@@ -124,7 +125,7 @@ export default function AssignDelivery() {
           scannerBuffer.current = ''
           clearTimeout(scannerTimer.current)
           setScannerMode(false)
-          submitCode(captured)
+          submitCodeRef.current(captured)  
         }
         return
       }
@@ -138,7 +139,7 @@ export default function AssignDelivery() {
             const captured = scannerBuffer.current
             scannerBuffer.current = ''
             setScannerMode(false)
-            submitCode(captured)
+            submitCodeRef.current(captured)  
           } else {
             inputRef.current?.focus()
             scannerBuffer.current = ''
@@ -153,7 +154,7 @@ export default function AssignDelivery() {
       window.removeEventListener('keydown', onKeyDown)
       clearTimeout(scannerTimer.current)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // ← se registra una sola vez, sin stale closure gracias al ref
 
   /* ── Carga de datos ── */
   useEffect(() => { loadAll() }, [date])
@@ -310,6 +311,10 @@ export default function AssignDelivery() {
       setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [orders, assignedOrderIds])
+
+  // Mantener el ref siempre actualizado — el listener de teclado lo usará
+  // para evitar el stale closure (el listener se registra una sola vez con [])
+  useEffect(() => { submitCodeRef.current = submitCode }, [submitCode])
 
   const handleScan = (e) => {
     e.preventDefault()
@@ -734,7 +739,7 @@ export default function AssignDelivery() {
                         </svg>
                       )
                     }
-                    {scanLoading ? 'BUSCANDO...' : 'BUSCAR'}
+                    
                   </button>
 
                   {/* Botón de cámara — solo en mobile */}
