@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",
     "react-datepicker": "^9.1.0",

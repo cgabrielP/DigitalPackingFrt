@@ -3,6 +3,7 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import Layout from '../components/Layout'
 import DeliveryAssignmentRow from '../components/DeliveryAssignmentRow'
+import CameraScanner from '../components/CameraScanner'
 import './AssignDelivery.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -51,6 +52,7 @@ export default function AssignDelivery() {
   const [scanError,   setScanError]   = useState(null)
   const [scanLoading, setScanLoading] = useState(false)
   const [scannerMode, setScannerMode] = useState(false)
+  const [cameraOpen,  setCameraOpen]  = useState(false)  // ← cámara
 
   // ── Asignación ──
   const [selectedUser, setSelectedUser] = useState('')
@@ -668,6 +670,18 @@ export default function AssignDelivery() {
           {/* ════════════════════════════════════════
               CONTENIDO POR TAB
           ════════════════════════════════════════ */}
+
+          {/* Scanner de cámara — portal sobre todo */}
+          {cameraOpen && (
+            <CameraScanner
+              onScan={(code) => {
+                setCameraOpen(false)
+                submitCode(code)
+              }}
+              onClose={() => setCameraOpen(false)}
+            />
+          )}
+
           {loading ? (
             <div className="adl-empty"><span className="adl-spin adl-spin--lg" /></div>
 
@@ -722,9 +736,22 @@ export default function AssignDelivery() {
                     }
                     {scanLoading ? 'BUSCANDO...' : 'BUSCAR'}
                   </button>
+
+                  {/* Botón de cámara — solo en mobile */}
+                  <button
+                    type="button"
+                    className="adl-btn-camera"
+                    onClick={() => setCameraOpen(true)}
+                    title="Escanear con cámara"
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </button>
                 </form>
                 <p className="adl-scan-hint">
-                  Escribí el ID manualmente o apuntá la pistola lectora — captura automática activa
+                  Ingresá el ID, escaneá con la pistola, o usá la cámara del celular
                 </p>
               </div>
 

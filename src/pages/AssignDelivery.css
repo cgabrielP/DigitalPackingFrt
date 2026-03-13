@@ -613,6 +613,160 @@
   width: 100%;
 }
 
+/* ═══════════════════════════════════════════
+   AGREGAR A AssignDelivery.css
+═══════════════════════════════════════════ */
+
+/* ── Botón de cámara — solo mobile ── */
+.adl-btn-camera {
+  flex-shrink: 0;
+  height: 40px;
+  width: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.adl-btn-camera:hover {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.4);
+  color: #34d399;
+}
+
+@media (min-width: 641px) {
+  .adl-btn-camera { display: none; }
+}
+
+/* ── Navegación de días (header) ── */
+.adl-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.adl-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.adl-date-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+.adl-date-nav-btn:hover:not(:disabled) {
+  background: var(--bg-active);
+  border-color: var(--border-active);
+}
+.adl-date-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.adl-date-nav-input {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.adl-date-nav-input:focus {
+  border-color: var(--border-active);
+}
+
+/* ── Etiqueta de fecha debajo del header ── */
+.adl-date-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+/* ── Stat destacado (A PAGAR HOY) ── */
+.adl-stat--highlight {
+  border-color: rgba(52, 211, 153, 0.25) !important;
+  background: rgba(52, 211, 153, 0.05) !important;
+}
+
+/* ── Botón clear dentro de city/delivery btn ── */
+.adl-city-clear {
+  margin-left: 2px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.15s;
+}
+.adl-city-clear:hover { color: var(--text-primary); }
+
+/* ── Opción de delivery en el dropdown ── */
+.adl-delivery-opt-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adl-delivery-opt-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.adl-delivery-opt-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.adl-delivery-opt-paid {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: #34d399;
+  letter-spacing: 0.5px;
+}
+
+/* Ajuste para que la opción de delivery muestre nombre + meta */
+.adl-city-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
 @keyframes adl-up     { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes adl-fade   { from { opacity: 0; } to { opacity: 1; } }
 @keyframes adl-scale  { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
