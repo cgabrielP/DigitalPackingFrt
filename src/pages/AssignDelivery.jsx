@@ -271,46 +271,55 @@ export default function AssignDelivery() {
   )
 
   /* ── Scanner submit ── */
-  const submitCode = useCallback(async (value) => {
-    const trimmed = value.trim()
-    if (!trimmed) return
-    setScanLoading(true)
-    setScanError(null)
-    setScanWarning(null)
-    setFoundOrder(null)
-    setSelectedUser('')
-    setAssignNotes('')
+const submitCode = useCallback(async (value) => {
+  const trimmed = value.trim()
+  if (!trimmed) return
+  setScanLoading(true)
+  setScanError(null)
+  setScanWarning(null)
+  setFoundOrder(null)
+  setSelectedUser('')
+  setAssignNotes('')
 
-    try {
-      const match = orders.find(o =>
-        o.id === trimmed ||
-        o.packId === trimmed ||
-        o.shippingId === trimmed ||
-        o.displayIdentifier?.toString() === trimmed
-      )
+  try {
+    // Dejar que el backend resuelva el código (igual que ScanOrder)
+    const res = await fetch(`${API_URL}/orders/scan`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ code: trimmed }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Orden no encontrada')
 
-      if (!match) throw new Error('Orden no encontrada')
+    // Buscar la orden completa en el array local por id
+    const match = orders.find(o =>
+      o.id === data.displayIdentifier?.toString() ||
+      o.packId === data.displayIdentifier?.toString() ||
+      o.id === data.packedOrders?.[0]
+    )
 
-      if (assignedOrderIds.has(match.id)) {
-        throw new Error('Esta orden ya tiene un delivery asignado')
-      }
+    if (!match) throw new Error('Orden no encontrada en el sistema')
 
-      if (match.pickingStatus !== 'packed') {
-        setScanWarning(
-          `La orden #${match.packId ?? match.id} tiene estado "${match.pickingStatus}" — no está empacada todavía`
-        )
-      }
-
-      setFoundOrder(match)
-    } catch (err) {
-      setScanError(err.message)
-    } finally {
-      setScanLoading(false)
-      setCode('')
-      if (inputRef.current) inputRef.current.value = ''
-      setTimeout(() => inputRef.current?.focus(), 50)
+    if (assignedOrderIds.has(match.id)) {
+      throw new Error('Esta orden ya tiene un delivery asignado')
     }
-  }, [orders, assignedOrderIds])
+
+    if (match.pickingStatus !== 'packed') {
+      setScanWarning(
+        `La orden #${match.packId ?? match.id} tiene estado "${match.pickingStatus}" — no está empacada todavía`
+      )
+    }
+
+    setFoundOrder(match)
+  } catch (err) {
+    setScanError(err.message)
+  } finally {
+    setScanLoading(false)
+    setCode('')
+    if (inputRef.current) inputRef.current.value = ''
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+}, [orders, assignedOrderIds])
 
   // Mantener el ref siempre actualizado — el listener de teclado lo usará
   // para evitar el stale closure (el listener se registra una sola vez con [])
