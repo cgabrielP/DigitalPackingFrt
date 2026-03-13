@@ -282,23 +282,18 @@ const submitCode = useCallback(async (value) => {
   setAssignNotes('')
 
   try {
-    // Dejar que el backend resuelva el código (igual que ScanOrder)
-    const res = await fetch(`${API_URL}/orders/scan`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ code: trimmed }),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Orden no encontrada')
+    // Replicar parseScannedCode del backend — sin side effects
+    const idMatch = trimmed.match(/"id"\s*:\s*"(\d+)"/)
+    const resolvedCode = idMatch?.[1] ?? trimmed
 
-    // Buscar la orden completa en el array local por id
     const match = orders.find(o =>
-      o.id === data.displayIdentifier?.toString() ||
-      o.packId === data.displayIdentifier?.toString() ||
-      o.id === data.packedOrders?.[0]
+      o.id === resolvedCode ||
+      o.packId === resolvedCode ||
+      o.shippingId === resolvedCode ||
+      o.displayIdentifier?.toString() === resolvedCode
     )
 
-    if (!match) throw new Error('Orden no encontrada en el sistema')
+    if (!match) throw new Error('Orden no encontrada')
 
     if (assignedOrderIds.has(match.id)) {
       throw new Error('Esta orden ya tiene un delivery asignado')
