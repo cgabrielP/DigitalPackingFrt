@@ -13,11 +13,13 @@ const getSession = () => {
   catch { return null }
 }
 const todayISO = () => new Date().toISOString().split('T')[0]
-const formatDateLabel = (iso) => new Date(iso + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })
+const formatDateLabel = (iso) =>
+  new Date(iso + 'T12:00:00').toLocaleDateString('es-CL', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  })
 
 export default function MyDeliveries() {
   const [assignments, setAssignments] = useState([])
-  const [report,      setReport]      = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [date,        setDate]        = useState(todayISO())
   const [theme,       setTheme]       = useState(() => localStorage.getItem('picking_theme') || 'light')
@@ -29,23 +31,14 @@ export default function MyDeliveries() {
     localStorage.setItem('picking_theme', theme)
   }, [theme])
 
-  useEffect(() => {
-    loadData()
-  }, [date])
+  useEffect(() => { loadData() }, [date])
 
   const loadData = async () => {
     setLoading(true)
     try {
-      const [assignmentsRes, reportRes] = await Promise.all([
-        fetch(`${API_URL}/delivery/assignments?date=${date}`, { headers: getHeaders() }),
-        fetch(`${API_URL}/delivery/report?date=${date}&userId=${session.userId}`, { headers: getHeaders() }),
-      ])
-      const [assignmentsData, reportData] = await Promise.all([
-        assignmentsRes.json(),
-        reportRes.json(),
-      ])
-      setAssignments(Array.isArray(assignmentsData) ? assignmentsData : [])
-      setReport(reportData)
+      const res  = await fetch(`${API_URL}/delivery/assignments?date=${date}`, { headers: getHeaders() })
+      const data = await res.json()
+      setAssignments(Array.isArray(data) ? data : [])
     } catch {
       /* silencioso */
     } finally {
@@ -53,8 +46,28 @@ export default function MyDeliveries() {
     }
   }
 
-  const delivered   = useMemo(() => assignments.filter(a => a.order.shippingStatus === 'delivered'), [assignments])
-  const inTransit   = useMemo(() => assignments.filter(a => a.order.shippingStatus === 'shipped'),   [assignments])
+  /* ── Derivados de assignments ── */
+  const delivered = useMemo(
+    () => assignments.filter(a => a.order.shippingStatus === 'delivered'),
+    [assignments]
+  )
+  const inTransit = useMemo(
+    () => assignments.filter(a => a.order.shippingStatus === 'shipped'),
+    [assignments]
+  )
+
+  /*
+   * Total a cobrar: solo órdenes donde
+   *   - status NO es 'cancelled'  (orden no anulada)
+   *   - shippingStatus ES 'delivered'  (efectivamente entregada)
+   */
+  const totalACobrar = useMemo(
+    () =>
+      assignments
+        .filter(a => a.order.status !== 'cancelled' && a.order.shippingStatus === 'delivered')
+        .reduce((sum, a) => sum + (a.paymentAmount || 0), 0),
+    [assignments]
+  )
 
   /* ── Navegar entre días ── */
   const changeDate = (offset) => {
@@ -66,7 +79,11 @@ export default function MyDeliveries() {
   return (
     <div className="mdl-root">
       <div className="mdl-bg-grid" />
-      <Layout subtitle="DELIVERY" theme={theme} onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}>
+      <Layout
+        subtitle="DELIVERY"
+        theme={theme}
+        onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+      >
         <div className="mdl-page">
 
           {/* ── Header ── */}
@@ -86,7 +103,12 @@ export default function MyDeliveries() {
                 value={date}
                 onChange={e => setDate(e.target.value)}
               />
-              <button className="mdl-date-btn" onClick={() => changeDate(1)}>→</button>
+              <button
+                className="mdl-date-btn"
+                onClick={() => changeDate(1)}
+                disabled={date >= todayISO()}
+                style={date >= todayISO() ? { opacity: 0.35, cursor: 'not-allowed' } : {}}
+              >→</button>
             </div>
           </header>
 
@@ -106,9 +128,10 @@ export default function MyDeliveries() {
               <span className="mdl-stat-value mdl-stat-value--green">{delivered.length}</span>
               <span className="mdl-stat-label">ENTREGADOS</span>
             </div>
+            {/* Total calculado localmente: no canceladas + entregadas */}
             <div className="mdl-stat mdl-stat--highlight">
               <span className="mdl-stat-value mdl-stat-value--green">
-                ${report?.totalPayment?.toLocaleString('es-CL') ?? '0'}
+                ${totalACobrar.toLocaleString('es-CL')}
               </span>
               <span className="mdl-stat-label">A COBRAR HOY</span>
             </div>

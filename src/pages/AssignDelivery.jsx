@@ -17,6 +17,8 @@ const getSession = () => {
 }
 
 const todayISO = () => new Date().toISOString().split('T')[0]
+const formatDateLabel = (iso) =>
+  new Date(iso + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })
 
 /* ── Toast ── */
 const Toast = ({ toast }) => {
@@ -56,20 +58,23 @@ export default function AssignDelivery() {
   const [assigning,    setAssigning]    = useState(false)
 
   // ── Filtros tab assigned ──
-  const [search,       setSearch]       = useState('')
-  const [dateRange,    setDateRange]    = useState([null, null])
-  const [calendarOpen, setCalendarOpen] = useState(false)
-  const [cityFilter,   setCityFilter]   = useState('all')
-  const [cityOpen,     setCityOpen]     = useState(false)
+  const [search,          setSearch]          = useState('')
+  const [dateRange,       setDateRange]       = useState([null, null])
+  const [calendarOpen,    setCalendarOpen]    = useState(false)
+  const [cityFilter,      setCityFilter]      = useState('all')
+  const [cityOpen,        setCityOpen]        = useState(false)
+  const [deliveryFilter,  setDeliveryFilter]  = useState('all')   // ← NUEVO
+  const [deliveryOpen,    setDeliveryOpen]    = useState(false)   // ← NUEVO
   const [startDate, endDate] = dateRange
 
   // ── Refs ──
-  const inputRef      = useRef(null)
-  const scannerBuffer = useRef('')
-  const scannerTimer  = useRef(null)
-  const calendarRef   = useRef(null)
-  const calendarBtn   = useRef(null)
-  const cityRef       = useRef(null)
+  const inputRef         = useRef(null)
+  const scannerBuffer    = useRef('')
+  const scannerTimer     = useRef(null)
+  const calendarRef      = useRef(null)
+  const calendarBtn      = useRef(null)
+  const cityRef          = useRef(null)
+  const deliveryFilterRef = useRef(null)  // ← NUEVO
 
   const session = getSession()
 
@@ -88,6 +93,8 @@ export default function AssignDelivery() {
       ) setCalendarOpen(false)
       if (cityRef.current && !cityRef.current.contains(e.target))
         setCityOpen(false)
+      if (deliveryFilterRef.current && !deliveryFilterRef.current.contains(e.target))
+        setDeliveryOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -177,21 +184,39 @@ export default function AssignDelivery() {
     setTimeout(() => setToast(null), 3500)
   }
 
+  /* ── Navegación de días ── */
+  const changeDate = (offset) => {
+    const d = new Date(date + 'T12:00:00')
+    d.setDate(d.getDate() + offset)
+    setDate(d.toISOString().split('T')[0])
+  }
+
   /* ── Memos ── */
   const assignedOrderIds = useMemo(
     () => new Set(assignments.map(a => a.orderId)),
     [assignments]
   )
 
-  // Lista base sin filtros adicionales — para conteos correctos en dropdown de ciudad
-  const baseOrders = useMemo(() =>
-    orders.filter(o =>
-      o.pickingStatus === 'packed' &&
-      !assignedOrderIds.has(o.id) &&
-      !['delivered', 'shipped', 'not_delivered'].includes(o.shippingStatus)
-    ), [orders, assignedOrderIds])
+  /* Total a pagar del día — no canceladas y con shippingStatus delivered */
+  const totalPagarHoy = useMemo(() =>
+    assignments
+      .filter(a => a.order.status !== 'cancelled' && a.order.shippingStatus === 'delivered')
+      .reduce((sum, a) => sum + (a.paymentAmount || 0), 0),
+    [assignments]
+  )
 
-  // Ciudades únicas de la lista base
+  /* Total filtrado por delivery seleccionado */
+  const totalPagarFiltered = useMemo(() => {
+    if (deliveryFilter === 'all') return null
+    return assignments
+      .filter(a =>
+        a.deliveryUser?.id === deliveryFilter &&
+        a.order.status !== 'cancelled' &&
+        a.order.shippingStatus === 'delivered'
+      )
+      .reduce((sum, a) => sum + (a.paymentAmount || 0), 0)
+  }, [assignments, deliveryFilter])
+
   const cityOptionsAssigned = useMemo(() => {
     const cities = assignments.map(a => a.order?.receiverCity).filter(Boolean)
     return ['all', ...new Set(cities)]
@@ -211,9 +236,11 @@ export default function AssignDelivery() {
     return `${fmt(startDate)} → ${fmt(endDate)}`
   }, [startDate, endDate])
 
-  // Asignaciones filtradas
+  /* Asignaciones filtradas — incluye filtro de delivery */
   const filteredAssignments = useMemo(() => {
     return assignments.filter(a => {
+      const matchDelivery = deliveryFilter === 'all' || a.deliveryUser?.id === deliveryFilter
+
       const matchSearch = search === '' ||
         (a.order?.buyerNickname ?? '').toLowerCase().includes(search.toLowerCase()) ||
         (a.order?.packId ?? a.order?.id ?? '').toString().includes(search) ||
@@ -229,11 +256,16 @@ export default function AssignDelivery() {
         if (endDate   && d > toDateOnly(endDate))   matchDate = false
       }
 
-      return matchSearch && matchCity && matchDate
+      return matchDelivery && matchSearch && matchCity && matchDate
     })
-  }, [assignments, search, cityFilter, startDate, endDate])
+  }, [assignments, search, cityFilter, startDate, endDate, deliveryFilter])
 
-  const hasActiveFilters = cityFilter !== 'all' || startDate || endDate
+  const hasActiveFilters = cityFilter !== 'all' || startDate || endDate || deliveryFilter !== 'all'
+
+  const selectedDeliveryName = useMemo(
+    () => deliveryUsers.find(u => u.id === deliveryFilter)?.name ?? null,
+    [deliveryUsers, deliveryFilter]
+  )
 
   /* ── Scanner submit ── */
   const submitCode = useCallback(async (value) => {
@@ -283,7 +315,7 @@ export default function AssignDelivery() {
     submitCode(value)
   }
 
-  /* ── Confirmar asignación desde found card ── */
+  /* ── Confirmar asignación ── */
   const handleAssignFound = async () => {
     if (!foundOrder || !selectedUser) return
     setAssigning(true)
@@ -340,13 +372,39 @@ export default function AssignDelivery() {
               <h1 className="adl-title">ASIGNAR DELIVERY</h1>
               <p className="adl-sub">Escaneá o ingresá el número de orden para asignarla</p>
             </div>
+
+            {/* Navegación de días */}
+            <div className="adl-date-nav">
+              <button className="adl-date-nav-btn" onClick={() => changeDate(-1)} title="Día anterior">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+              <input
+                type="date"
+                className="adl-date-nav-input"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+              />
+              <button
+                className="adl-date-nav-btn"
+                onClick={() => changeDate(1)}
+                title="Día siguiente"
+                disabled={date >= todayISO()}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            </div>
           </header>
+
+          <p className="adl-date-label">{formatDateLabel(date)}</p>
 
           <Toast toast={toast} />
 
           {/* ── Stats ── */}
           <div className="adl-stats">
-           
             <div className="adl-stat">
               <span className="adl-stat-value adl-stat-value--blue">{assignments.length}</span>
               <span className="adl-stat-label">ASIGNADAS HOY</span>
@@ -361,12 +419,18 @@ export default function AssignDelivery() {
               <span className="adl-stat-value">{deliveryUsers.length}</span>
               <span className="adl-stat-label">DELIVERIES</span>
             </div>
+            {/* Stat de total a pagar — suma no-canceladas entregadas */}
+            <div className="adl-stat adl-stat--highlight">
+              <span className="adl-stat-value adl-stat-value--green">
+                ${totalPagarHoy.toLocaleString('es-CL')}
+              </span>
+              <span className="adl-stat-label">A PAGAR HOY</span>
+            </div>
           </div>
 
           {/* ── Toolbar ── */}
           <div className="adl-toolbar">
 
-            {/* Búsqueda — solo en tab assigned */}
             {tab === 'assigned' && (
               <div className="adl-search-wrapper">
                 <svg className="adl-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -383,7 +447,7 @@ export default function AssignDelivery() {
 
             <div className="adl-filters-row">
 
-              {/* Tabs */}
+              {/* Tabs ASIGNAR / ASIGNADAS */}
               <div className="adl-filter-group">
                 <span className="adl-filter-label">VISTA</span>
                 <div className="adl-tabs">
@@ -392,7 +456,6 @@ export default function AssignDelivery() {
                     onClick={() => setTab('pending')}
                   >
                     ASIGNAR
-                   
                   </button>
                   <button
                     className={`adl-tab ${tab === 'assigned' ? 'adl-tab--active' : ''}`}
@@ -406,9 +469,77 @@ export default function AssignDelivery() {
                 </div>
               </div>
 
-              {/* Filtros de ciudad y fecha — solo en tab assigned */}
+              {/* Filtros — solo en tab assigned */}
               {tab === 'assigned' && (
                 <>
+                  {/* ── Filtro por DELIVERY ── */}
+                  {deliveryUsers.length > 0 && (
+                    <div className="adl-filter-group">
+                      <span className="adl-filter-label">DELIVERY</span>
+                      <div className="adl-city-wrapper" ref={deliveryFilterRef}>
+                        <button
+                          className={`adl-city-btn ${deliveryFilter !== 'all' ? 'adl-city-btn--active' : ''}`}
+                          onClick={() => setDeliveryOpen(v => !v)}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                          </svg>
+                          {deliveryFilter === 'all' ? 'TODOS' : selectedDeliveryName?.toUpperCase()}
+                          {deliveryFilter !== 'all' && (
+                            <span
+                              className="adl-city-clear"
+                              onClick={e => { e.stopPropagation(); setDeliveryFilter('all') }}
+                            >×</span>
+                          )}
+                          <span className={`adl-city-chevron ${deliveryOpen ? 'adl-city-chevron--open' : ''}`}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                          </span>
+                        </button>
+                        {deliveryOpen && (
+                          <div className="adl-city-dropdown">
+                            <button
+                              className={`adl-city-option ${deliveryFilter === 'all' ? 'adl-city-option--active' : ''}`}
+                              onClick={() => { setDeliveryFilter('all'); setDeliveryOpen(false) }}
+                            >
+                              TODOS LOS DELIVERIES
+                              <span className="adl-city-count">{assignments.length}</span>
+                            </button>
+                            {deliveryUsers.map(u => {
+                              const count = assignments.filter(a => a.deliveryUser?.id === u.id).length
+                              const paid  = assignments
+                                .filter(a => a.deliveryUser?.id === u.id && a.order.status !== 'cancelled' && a.order.shippingStatus === 'delivered')
+                                .reduce((s, a) => s + (a.paymentAmount || 0), 0)
+                              return (
+                                <button
+                                  key={u.id}
+                                  className={`adl-city-option ${deliveryFilter === u.id ? 'adl-city-option--active' : ''}`}
+                                  onClick={() => { setDeliveryFilter(u.id); setDeliveryOpen(false) }}
+                                >
+                                  <span className="adl-delivery-opt-name">
+                                    <span className="adl-delivery-opt-avatar">
+                                      {u.name?.[0]?.toUpperCase() ?? '?'}
+                                    </span>
+                                    {u.name.toUpperCase()}
+                                  </span>
+                                  <span className="adl-delivery-opt-meta">
+                                    {paid > 0 && (
+                                      <span className="adl-delivery-opt-paid">${paid.toLocaleString('es-CL')}</span>
+                                    )}
+                                    <span className="adl-city-count">{count}</span>
+                                  </span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Filtro por COMUNA ── */}
                   {cityOptionsAssigned.length > 2 && (
                     <div className="adl-filter-group">
                       <span className="adl-filter-label">COMUNA</span>
@@ -422,6 +553,9 @@ export default function AssignDelivery() {
                             <circle cx="12" cy="10" r="3"/>
                           </svg>
                           {cityFilter === 'all' ? 'TODAS' : cityFilter.toUpperCase()}
+                          {cityFilter !== 'all' && (
+                            <span className="adl-city-clear" onClick={e => { e.stopPropagation(); setCityFilter('all') }}>×</span>
+                          )}
                           <span className={`adl-city-chevron ${cityOpen ? 'adl-city-chevron--open' : ''}`}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                               <polyline points="6 9 12 15 18 9"/>
@@ -451,6 +585,7 @@ export default function AssignDelivery() {
                     </div>
                   )}
 
+                  {/* ── Filtro por FECHA ── */}
                   <div className="adl-filter-group">
                     <span className="adl-filter-label">FECHA ASIGNACIÓN</span>
                     <div className="adl-date-wrapper">
@@ -500,11 +635,19 @@ export default function AssignDelivery() {
               )}
             </div>
 
-            {/* Filtros activos */}
+            {/* ── Filtros activos ── */}
             {hasActiveFilters && tab === 'assigned' && (
               <div className="adl-active-filters">
                 <span>
                   {filteredAssignments.length} resultado{filteredAssignments.length !== 1 ? 's' : ''}
+                  {deliveryFilter !== 'all' && (
+                    <span style={{ color: '#34d399', marginLeft: 8 }}>· {selectedDeliveryName}</span>
+                  )}
+                  {deliveryFilter !== 'all' && totalPagarFiltered !== null && totalPagarFiltered > 0 && (
+                    <span style={{ color: '#34d399', marginLeft: 4 }}>
+                      · <strong>${totalPagarFiltered.toLocaleString('es-CL')}</strong> a pagar
+                    </span>
+                  )}
                   {cityFilter !== 'all' && (
                     <span style={{ color: '#06b6d4', marginLeft: 8 }}>· {cityFilter}</span>
                   )}
@@ -514,7 +657,7 @@ export default function AssignDelivery() {
                 </span>
                 <button
                   className="adl-active-filters-clear"
-                  onClick={() => { setCityFilter('all'); setDateRange([null, null]) }}
+                  onClick={() => { setDeliveryFilter('all'); setCityFilter('all'); setDateRange([null, null]) }}
                 >
                   Limpiar filtros
                 </button>
@@ -533,7 +676,6 @@ export default function AssignDelivery() {
             /* ── Tab: ASIGNAR (scanner) ── */
             <div className="adl-scan-section">
 
-              {/* Input de escaneo */}
               <div className="adl-scan-form-wrapper">
                 <div className="adl-scan-header">
                   <p className="adl-scan-label">ESCANEAR O INGRESAR N° DE ORDEN</p>
@@ -586,7 +728,6 @@ export default function AssignDelivery() {
                 </p>
               </div>
 
-              {/* Alerta: orden no empacada */}
               {scanWarning && (
                 <div className="adl-scan-warning">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -598,7 +739,6 @@ export default function AssignDelivery() {
                 </div>
               )}
 
-              {/* Error */}
               {scanError && (
                 <div className="adl-scan-error">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -610,7 +750,6 @@ export default function AssignDelivery() {
                 </div>
               )}
 
-              {/* Card de orden encontrada */}
               {foundOrder && (
                 <div className="adl-found-card">
                   <div className="adl-found-header">
@@ -642,7 +781,6 @@ export default function AssignDelivery() {
 
                   <div className="adl-found-divider" />
 
-                  {/* Selector de delivery */}
                   <p className="adl-label">ASIGNAR A</p>
                   <div className="adl-delivery-list">
                     {deliveryUsers.length === 0
@@ -706,7 +844,6 @@ export default function AssignDelivery() {
                 </div>
               )}
 
-              {/* Estado vacío */}
               {!foundOrder && !scanError && !scanLoading && (
                 <div className="adl-empty">
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.8">

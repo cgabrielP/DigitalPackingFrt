@@ -1,3 +1,6 @@
+/* ═══════════════════════════════════════════════════
+   BASE — fila de tabla (desktop)
+═══════════════════════════════════════════════════ */
 .dar-row {
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
@@ -11,19 +14,19 @@
   font-size: 13px;
   color: var(--text-primary);
   white-space: nowrap;
+  vertical-align: middle;
 }
 
-/* Fijar botón unassign siempre visible */
-.dar-row td:last-child {
+/* Fijar botón unassign */
+.dar-action-cell {
   position: sticky;
   right: 0;
   background: var(--bg-surface);
   z-index: 1;
 }
-.dar-row:hover td:last-child {
-  background: var(--bg-elevated);
-}
+.dar-row:hover .dar-action-cell { background: var(--bg-elevated); }
 
+/* ── Celdas de texto ── */
 .dar-id   { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-muted); }
 .dar-date { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--text-muted); }
 .dar-city { color: var(--text-muted); font-size: 12px; }
@@ -35,7 +38,7 @@
   text-overflow: ellipsis;
 }
 
-/* Items */
+/* ── Miniaturas ── */
 .dar-items { display: flex; align-items: center; gap: 4px; }
 .dar-thumb {
   width: 28px; height: 28px; border-radius: 4px;
@@ -50,21 +53,21 @@
   font-family: 'Space Mono', monospace;
 }
 
-/* Badge de estado */
+/* ── Badge de estado ── */
 .dar-badge {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 9px; border-radius: 4px; border: 1px solid;
   font-family: 'Space Mono', monospace;
-  font-size: 9px; letter-spacing: 1px;
+  font-size: 9px; letter-spacing: 1px; white-space: nowrap;
 }
-.dar-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.dar-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
 .dar-badge--delivered { color: #34d399; background: #34d39912; border-color: #34d39930; }
 .dar-badge--shipped   { color: #60a5fa; background: #60a5fa12; border-color: #60a5fa30; }
 .dar-badge--failed    { color: #f87171; background: #f8717112; border-color: #f8717130; }
 .dar-badge--other     { color: var(--text-faint); background: var(--bg-elevated); border-color: var(--border); }
 
-/* Delivery user cell */
+/* ── Celda de delivery ── */
 .dar-user-cell { display: flex; align-items: center; gap: 8px; }
 .dar-avatar {
   width: 26px; height: 26px; border-radius: 6px;
@@ -73,19 +76,18 @@
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 
-/* Monto */
-.dar-payment { font-family: 'Space Mono', monospace; font-size: 12px; }
-.dar-amount      { color: var(--text-muted); }
+/* ── Monto ── */
+.dar-amount       { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--text-muted); }
 .dar-amount--paid { color: #34d399; }
 
-/* Notas */
+/* ── Notas ── */
 .dar-notes-text {
   max-width: 100px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap;
   font-size: 12px; color: var(--text-muted);
 }
 
-/* Botón quitar */
+/* ── Botón quitar (desktop) ── */
 .dar-btn-unassign {
   width: 26px; height: 26px; border-radius: 6px;
   background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
@@ -95,16 +97,256 @@
 }
 .dar-btn-unassign:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.4); }
 
-/* Responsive — ocultar columnas menos críticas */
-@media (max-width: 1024px) {
-  .dar-row td.dar-date  { display: none; }
+/* ═══════════════════════════════════════════════════
+   DESKTOP: ocultar celda mobile, mostrar celdas desk
+═══════════════════════════════════════════════════ */
+@media (min-width: 641px) {
+  .dar-mob  { display: none !important; }
+  .dar-desk { display: table-cell; }
+}
+
+/* Ocultar columnas menos críticas en pantallas medianas */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .dar-row td.dar-date,
   .dar-row td.dar-notes { display: none; }
 }
-@media (max-width: 768px) {
+@media (min-width: 641px) and (max-width: 768px) {
   .dar-row td.dar-city { display: none; }
 }
 
+/* ═══════════════════════════════════════════════════
+   MOBILE (≤ 640px) — card expandible
+═══════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+
+  /* Ocultar thead del padre */
+  .adl-table thead,
+  .mdl-table thead { display: none; }
+
+  /* tbody y tabla como bloque */
+  .adl-table,
+  .adl-table tbody,
+  .mdl-table,
+  .mdl-table tbody { display: block; width: 100%; }
+
+  /* Fila → card */
+  .dar-row {
+    display: block;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    background: var(--bg-surface);
+  }
+  .dar-row:last-child { border-bottom: 1px solid var(--border) !important; }
+  .dar-row:hover { background: var(--bg-surface); }
+
+  /* Ocultar todas las celdas desktop */
+  .dar-desk { display: none !important; }
+
+  /* Celda mobile → bloque full width */
+  .dar-mob {
+    display: block !important;
+    padding: 0 !important;
+    white-space: normal !important;
+  }
+
+  /* ── Cabecera del card (siempre visible) ── */
+  .dar-mob-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .dar-mob-summary:hover    { background: var(--bg-elevated); }
+  .dar-row--expanded .dar-mob-summary {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+  }
+
+  /* Info izquierda */
+  .dar-mob-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .dar-mob-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .dar-mob-buyer {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dar-mob-city {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Meta derecha */
+  .dar-mob-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* Chevron */
+  .dar-chevron {
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+  }
+  .dar-chevron--open { transform: rotate(180deg); }
+
+  /* ── Cuerpo expandido ── */
+  .dar-mob-body {
+    padding: 10px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: dar-slide-down 0.18s ease both;
+  }
+
+  .dar-mob-detail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .dar-mob-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+
+  /* ── Botón quitar (mobile) ── */
+  .dar-mob-actions { padding-top: 4px; }
+  .dar-btn-unassign-mob {
+    width: 100%;
+    padding: 8px 14px;
+    border-radius: 7px;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
+    color: #f87171;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .dar-btn-unassign-mob:hover {
+    background: rgba(239,68,68,0.16);
+    border-color: rgba(239,68,68,0.4);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   Animaciones
+═══════════════════════════════════════════════════ */
 @keyframes dar-up {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes dar-slide-down {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════
+   ZOOM OVERLAY
+═══════════════════════════════════════════════════ */
+.dar-thumb--zoomable {
+  cursor: zoom-in;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.dar-thumb--zoomable:hover {
+  transform: scale(1.12);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 1;
+  position: relative;
+}
+
+.dar-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: dar-zoom-in 0.18s ease both;
+  cursor: zoom-out;
+}
+
+.dar-zoom-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  cursor: default;
+  max-width: min(480px, 90vw);
+}
+
+.dar-zoom-img {
+  width: 100%;
+  max-width: 480px;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+}
+
+.dar-zoom-title {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  font-family: 'Space Mono', monospace;
+  max-width: 400px;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+}
+
+.dar-zoom-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.dar-zoom-close:hover { background: rgba(255,255,255,0.2); }
+
+@keyframes dar-zoom-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
 }

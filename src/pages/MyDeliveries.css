@@ -57,7 +57,23 @@
 
 .mdl-spin { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: mdl-rotate 0.7s linear infinite; }
 .mdl-spin--lg { width: 28px; height: 28px; border-width: 3px; }
+/* Agregar a MyDeliveries.css */
 
+/* Stat destacado — A COBRAR HOY */
+.mdl-stat--highlight {
+  border-color: rgba(52, 211, 153, 0.25) !important;
+  background: rgba(52, 211, 153, 0.05) !important;
+}
+
+/* Etiqueta de fecha */
+.mdl-date-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
 @keyframes mdl-rotate { to { transform: rotate(360deg); } }
 @media (max-width: 768px) {
   .mdl-stats { grid-template-columns: repeat(2, 1fr); }
