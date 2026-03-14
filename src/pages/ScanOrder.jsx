@@ -45,33 +45,39 @@ export default function ScanOrder() {
 
   /* ── Handlers de submit / pack / sync ── */
   const submitCode = useCallback(async (value) => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
+  const trimmed = value.trim();
+  if (!trimmed) return;
 
-    setLoading(true);
-    setError(null);
-    setOrder(null);
-    setPacked(false);
+  setLoading(true);
+  setError(null);
+  setOrder(null);
+  setPacked(false);
 
-    try {
-      const res = await fetch(`${API_URL}/orders/scan`, {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({ code: trimmed }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al escanear");
-      setOrder(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-      setCode("");
-      if (inputRef.current) inputRef.current.value = "";
-      // Refocus siempre, incluso si hay resultado
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, []);
+  try {
+    const res = await fetch(`${API_URL}/orders/scan`, {
+      method:  "POST",
+      headers: getHeaders(),
+      body:    JSON.stringify({ code: trimmed }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error al escanear");
+
+    await fetch(`${API_URL}/api/log`, {
+      method:  "POST",
+      headers: getHeaders(),
+      body:    JSON.stringify({ orderId: data.packedOrders?.[0] ?? data.id, action: "scanned" }),
+    });
+
+    setOrder(data);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+    setCode("");
+    if (inputRef.current) inputRef.current.value = "";
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }
+}, []);
 
   const handleScan = (e) => {
     e.preventDefault();
@@ -81,17 +87,21 @@ export default function ScanOrder() {
     submitCode(value);
   };
 
-  const handlePack = async () => {
+  const handlePack = async (counts) => {
     if (!order) return;
     try {
       const res = await fetch(
         `${API_URL}/orders/pack/${order.displayIdentifier}`,
-        {
-          method: "POST",
-          headers: getHeaders(),
-        }
+        { method: "POST", headers: getHeaders() }
       );
       if (!res.ok) throw new Error("Error al marcar como empacado");
+
+      await fetch(`${API_URL}/api/log`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ orderId: order.packedOrders?.[0] ?? order.id, action: "packed" }),
+      });
+
       setPacked(true);
       setTimeout(() => {
         setOrder(null);
@@ -208,16 +218,16 @@ export default function ScanOrder() {
         syncing={syncing}
         navPath="/orders"
       >
-         {cameraOpen && (
-            <CameraScanner
-              onScan={(code) => {
-                setCameraOpen(false)
-                setCode(code)
-                submitCode(code)
-              }}
-              onClose={() => setCameraOpen(false)}
-            />
-          )}
+        {cameraOpen && (
+          <CameraScanner
+            onScan={(code) => {
+              setCameraOpen(false)
+              setCode(code)
+              submitCode(code)
+            }}
+            onClose={() => setCameraOpen(false)}
+          />
+        )}
         <main className="scan-main">
           {/* Input de escaneo */}
           <section className="scan-form-section">
@@ -276,24 +286,24 @@ export default function ScanOrder() {
                     ×
                   </button>
                 )}
-                
+
               </div>
               <button
-                  type="button"
-                  className="scan-camera-btn"
-                  onClick={() => setCameraOpen(true)}
-                  title="Escanear con cámara"
-                >
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                </button>
+                type="button"
+                className="scan-camera-btn"
+                onClick={() => setCameraOpen(true)}
+                title="Escanear con cámara"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </button>
               <button
                 type="submit"
                 className="scan-submit-btn"
                 disabled={loading}
-              >                
+              >
                 {loading ? (
                   <span className="spinner-sm" />
                 ) : (
@@ -312,7 +322,7 @@ export default function ScanOrder() {
                     BUSCAR
                   </>
                 )}
-              </button> 
+              </button>
             </form>
 
             {/* Hint */}
