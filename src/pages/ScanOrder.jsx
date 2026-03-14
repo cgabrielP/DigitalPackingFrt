@@ -3,6 +3,7 @@ import OrderCard from "../components/OrderCard";
 import Header from "../components/Header";
 import "./ScanOrder.css";
 import Layout from "../components/Layout";
+import CameraScanner from "../components/CameraScanner";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -19,7 +20,8 @@ export default function ScanOrder() {
   const [syncing, setSyncing] = useState(false);
   const [packed, setPacked] = useState(false);
   const [syncMsg, setSyncMsg] = useState(null);
-  const [scannerMode, setScannerMode] = useState(false); // pulso visual al recibir input del scanner
+  const [scannerMode, setScannerMode] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false)
   const [theme, setTheme] = useState(
     () => localStorage.getItem("picking_theme") || "dark"
   );
@@ -206,6 +208,16 @@ export default function ScanOrder() {
         syncing={syncing}
         navPath="/orders"
       >
+         {cameraOpen && (
+            <CameraScanner
+              onScan={(code) => {
+                setCameraOpen(false)
+                setCode(code)
+                submitCode(code)
+              }}
+              onClose={() => setCameraOpen(false)}
+            />
+          )}
         <main className="scan-main">
           {/* Input de escaneo */}
           <section className="scan-form-section">
@@ -213,9 +225,8 @@ export default function ScanOrder() {
               <p className="scan-section-label">ESCANEAR ORDEN</p>
               {/* Indicador de modo scanner */}
               <span
-                className={`scan-ready-indicator ${
-                  scannerMode ? "scan-ready-indicator--active" : ""
-                }`}
+                className={`scan-ready-indicator ${scannerMode ? "scan-ready-indicator--active" : ""
+                  }`}
               >
                 <span className="scan-ready-dot" />
                 {scannerMode ? "LEYENDO..." : "LISTO"}
@@ -242,9 +253,8 @@ export default function ScanOrder() {
                 <input
                   ref={inputRef}
                   type="text"
-                  className={`scan-input${
-                    scannerMode ? " scan-input--scanning" : ""
-                  }`}
+                  className={`scan-input${scannerMode ? " scan-input--scanning" : ""
+                    }`}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="ID de orden o escanea el código..."
@@ -266,12 +276,24 @@ export default function ScanOrder() {
                     ×
                   </button>
                 )}
+                
               </div>
+              <button
+                  type="button"
+                  className="scan-camera-btn"
+                  onClick={() => setCameraOpen(true)}
+                  title="Escanear con cámara"
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </button>
               <button
                 type="submit"
                 className="scan-submit-btn"
                 disabled={loading}
-              >
+              >                
                 {loading ? (
                   <span className="spinner-sm" />
                 ) : (
@@ -290,7 +312,7 @@ export default function ScanOrder() {
                     BUSCAR
                   </>
                 )}
-              </button>
+              </button> 
             </form>
 
             {/* Hint */}
