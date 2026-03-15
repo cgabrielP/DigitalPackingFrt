@@ -198,9 +198,8 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
       </td>
 
       <td className="td-date">{formatDate(order.lastUpdatedAt)}</td>
-      {/* Etiqueta — solo si tiene shippingId */}
       <td>
-        {order.shippingId ? (
+        {order.shippingId &&!['shipped', 'delivered', 'not_delivered'].includes(order.shippingStatus) &&(
           <button
             className="label-btn"
             onClick={() => openLabel(order)}
@@ -214,9 +213,7 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
             </svg>
             ETIQUETA
           </button>
-        ) : (
-          <span className="label-btn--none">—</span>
-        )}
+        ) }
       </td>
     </tr>
   );

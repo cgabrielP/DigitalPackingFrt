@@ -192,7 +192,7 @@ const OrderCard = ({ order, index, showUrgency = false }) => {
           </dl>
 
           {/* Etiqueta — mobile */}
-          {order.shippingId && (
+          {order.shippingId &&!['shipped', 'delivered', 'not_delivered'].includes(order.shippingStatus) && (
             <div className="ocard__label-action">
               <button
                 className="label-btn label-btn--full"
