@@ -71,7 +71,7 @@ const LogRow = ({ log }) => {
                                     })}
                                 </span>
                             </div>
-                            {log.order.shippingId && (
+                            {log.order.shippingId && !['shipped', 'delivered', 'not_delivered'].includes(log.order.shippingStatus) && (
                                 <div className="lt-detail-item">
                                     <span className="lt-detail-label">ETIQUETA</span>
                                     <button
