@@ -13,6 +13,7 @@ import AdminPanel from './pages/AdminPanel'
 import OrderHistory from './pages/OrderHistory'
 import AssignDelivery from './pages/AssignDelivery'
 import MyDeliveries from './pages/MyDeliveries'
+import PackingLog from './pages/PackingLog'
 
 /* ─────────────────────────────────────────
    GUARDS
@@ -103,6 +104,14 @@ function App() {
           element={
             <RoleRoute roles={['ADMIN', 'SUPERVISOR']}>
               <AssignDelivery />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="/packing-log"
+          element={
+            <RoleRoute roles={['ADMIN', 'SUPERVISOR']}>
+              <PackingLog />
             </RoleRoute>
           }
         />
