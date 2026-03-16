@@ -56,28 +56,30 @@ export default function AssignDelivery() {
     () => localStorage.getItem("picking_theme") || "light"
   );
   const [reportModal, setReportModal] = useState(false);
+
   // ── Scanner / búsqueda ──
   const [code, setCode] = useState("");
-  const [foundOrder, setFoundOrder] = useState(null);
   const [scanWarning, setScanWarning] = useState(null);
   const [scanError, setScanError] = useState(null);
   const [scanLoading, setScanLoading] = useState(false);
   const [scannerMode, setScannerMode] = useState(false);
-  const [cameraOpen, setCameraOpen] = useState(false); // ← cámara
+  const [cameraOpen, setCameraOpen] = useState(false);
 
-  // ── Asignación ──
+  // ── Asignación bulk ──
   const [selectedUser, setSelectedUser] = useState("");
-  const [assignNotes, setAssignNotes] = useState("");
-  const [assigning, setAssigning] = useState(false);
-
+  const [pendingOrders, setPendingOrders] = useState([]); // ← lista acumulada
+  const [bulkAssigning, setBulkAssigning] = useState(false);
+  const [bulkDone, setBulkDone] = useState(null); // { assigned: n, errors: [] }
+  const deliverySelectRef = useRef(null);
+  const [deliverySelectOpen, setDeliverySelectOpen] = useState(false);
   // ── Filtros tab assigned ──
   const [search, setSearch] = useState("");
   const [dateRange, setDateRange] = useState([null, null]);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [cityFilter, setCityFilter] = useState("all");
   const [cityOpen, setCityOpen] = useState(false);
-  const [deliveryFilter, setDeliveryFilter] = useState("all"); // ← NUEVO
-  const [deliveryOpen, setDeliveryOpen] = useState(false); // ← NUEVO
+  const [deliveryFilter, setDeliveryFilter] = useState("all");
+  const [deliveryOpen, setDeliveryOpen] = useState(false);
   const [startDate, endDate] = dateRange;
 
   // ── Refs ──
@@ -88,7 +90,7 @@ export default function AssignDelivery() {
   const calendarBtn = useRef(null);
   const cityRef = useRef(null);
   const deliveryFilterRef = useRef(null);
-  const submitCodeRef = useRef(null); // ← siempre apunta al submitCode más reciente
+  const submitCodeRef = useRef(null);
 
   const session = getSession();
 
@@ -101,6 +103,11 @@ export default function AssignDelivery() {
   /* ── Cerrar dropdowns al clickear fuera ── */
   useEffect(() => {
     const handler = (e) => {
+      if (
+        deliverySelectRef.current &&
+        !deliverySelectRef.current.contains(e.target)
+      )
+        setDeliverySelectOpen(false);
       if (
         calendarRef.current &&
         !calendarRef.current.contains(e.target) &&
@@ -119,11 +126,6 @@ export default function AssignDelivery() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  /* ── Auto-focus al limpiar resultado ── */
-  useEffect(() => {
-    if (!foundOrder) setTimeout(() => inputRef.current?.focus(), 50);
-  }, [foundOrder]);
 
   /* ── Captura global de teclado para pistola lectora ── */
   useEffect(() => {
@@ -171,7 +173,7 @@ export default function AssignDelivery() {
       window.removeEventListener("keydown", onKeyDown);
       clearTimeout(scannerTimer.current);
     };
-  }, []); // ← se registra una sola vez, sin stale closure gracias al ref
+  }, []);
 
   /* ── Carga de datos ── */
   useEffect(() => {
@@ -225,7 +227,6 @@ export default function AssignDelivery() {
     [assignments]
   );
 
-  /* Total a pagar del día — no canceladas y con shippingStatus delivered */
   const totalPagarHoy = useMemo(
     () =>
       assignments
@@ -238,7 +239,6 @@ export default function AssignDelivery() {
     [assignments]
   );
 
-  /* Total filtrado por delivery seleccionado */
   const totalPagarFiltered = useMemo(() => {
     if (deliveryFilter === "all") return null;
     return assignments
@@ -273,7 +273,6 @@ export default function AssignDelivery() {
     return `${fmt(startDate)} → ${fmt(endDate)}`;
   }, [startDate, endDate]);
 
-  /* Asignaciones filtradas — incluye filtro de delivery */
   const filteredAssignments = useMemo(() => {
     return assignments.filter((a) => {
       const matchDelivery =
@@ -312,7 +311,7 @@ export default function AssignDelivery() {
     [deliveryUsers, deliveryFilter]
   );
 
-  /* ── Scanner submit ── */
+  /* ── Scanner submit — acumula en pendingOrders ── */
   const submitCode = useCallback(
     async (value) => {
       const trimmed = value.trim();
@@ -320,12 +319,8 @@ export default function AssignDelivery() {
       setScanLoading(true);
       setScanError(null);
       setScanWarning(null);
-      setFoundOrder(null);
-      setSelectedUser("");
-      setAssignNotes("");
 
       try {
-        // Replicar parseScannedCode del backend — sin side effects
         const idMatch = trimmed.match(/"id"\s*:\s*"(\d+)"/);
         const resolvedCode = idMatch?.[1] ?? trimmed;
 
@@ -343,6 +338,15 @@ export default function AssignDelivery() {
           throw new Error("Esta orden ya tiene un delivery asignado");
         }
 
+        // ← acumular en lista, no reemplazar
+        setPendingOrders((prev) => {
+          if (prev.some((o) => o.id === match.id)) {
+            setScanError("Esta orden ya está en la lista");
+            return prev;
+          }
+          return [...prev, match];
+        });
+
         if (match.pickingStatus !== "packed") {
           setScanWarning(
             `La orden #${match.packId ?? match.id} tiene estado "${
@@ -350,8 +354,6 @@ export default function AssignDelivery() {
             }" — no está empacada todavía`
           );
         }
-
-        setFoundOrder(match);
       } catch (err) {
         setScanError(err.message);
       } finally {
@@ -364,8 +366,6 @@ export default function AssignDelivery() {
     [orders, assignedOrderIds]
   );
 
-  // Mantener el ref siempre actualizado — el listener de teclado lo usará
-  // para evitar el stale closure (el listener se registra una sola vez con [])
   useEffect(() => {
     submitCodeRef.current = submitCode;
   }, [submitCode]);
@@ -376,33 +376,52 @@ export default function AssignDelivery() {
     submitCode(value);
   };
 
-  /* ── Confirmar asignación ── */
-  const handleAssignFound = async () => {
-    if (!foundOrder || !selectedUser) return;
-    setAssigning(true);
-    try {
-      const res = await fetch(`${API_URL}/delivery/assign`, {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          orderId: foundOrder.id,
-          deliveryUserId: selectedUser,
-          notes: assignNotes,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      loadAll();
-      setFoundOrder(null);
-      setSelectedUser("");
-      setAssignNotes("");
-      setScanWarning(null);
-      showToast("success", "Orden asignada correctamente");
+  /* ── Confirmar asignación bulk ── */
+  const handleBulkAssign = async () => {
+    if (!selectedUser || pendingOrders.length === 0) return;
+    setBulkAssigning(true);
+    setBulkDone(null);
+    const total = pendingOrders.length;
+    const errors = [];
+
+    await Promise.all(
+      pendingOrders.map(async (order) => {
+        try {
+          const res = await fetch(`${API_URL}/delivery/assign`, {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({
+              orderId: order.id,
+              deliveryUserId: selectedUser,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+        } catch (err) {
+          errors.push(`#${order.packId ?? order.id}: ${err.message}`);
+        }
+      })
+    );
+
+    await loadAll();
+    setPendingOrders([]);
+    setSelectedUser("");
+    setBulkAssigning(false);
+
+    if (errors.length === 0) {
+      showToast(
+        "success",
+        `${total} orden${total !== 1 ? "es" : ""} asignada${
+          total !== 1 ? "s" : ""
+        } correctamente`
+      );
       setTab("assigned");
-    } catch (err) {
-      setScanError(err.message);
-    } finally {
-      setAssigning(false);
+    } else {
+      setBulkDone({ assigned: total - errors.length, errors });
+      showToast(
+        "error",
+        `${errors.length} orden${errors.length !== 1 ? "es" : ""} con error`
+      );
     }
   };
 
@@ -421,6 +440,7 @@ export default function AssignDelivery() {
       showToast("error", "No se pudo eliminar la asignación");
     }
   };
+
   const handleGenerateReport = (period) => {
     const result = generateDeliveryReport({
       assignments: filteredAssignments,
@@ -439,6 +459,7 @@ export default function AssignDelivery() {
       showToast("success", `Reporte generado · ${result.count} asignaciones`);
     }
   };
+
   /* ════════════════════════════════════════
      RENDER
   ════════════════════════════════════════ */
@@ -457,11 +478,10 @@ export default function AssignDelivery() {
               <p className="adl-eyebrow">OPERACIONES</p>
               <h1 className="adl-title">ASIGNAR DELIVERY</h1>
               <p className="adl-sub">
-                Escaneá o ingresá el número de orden para asignarla
+                Elegí un delivery, escaneá los paquetes y confirmá todo junto
               </p>
             </div>
 
-            {/* Navegación de días */}
             <div className="adl-date-nav">
               <button
                 className="adl-date-nav-btn"
@@ -531,7 +551,6 @@ export default function AssignDelivery() {
               <span className="adl-stat-value">{deliveryUsers.length}</span>
               <span className="adl-stat-label">DELIVERIES</span>
             </div>
-            {/* Stat de total a pagar — suma no-canceladas entregadas */}
             <div className="adl-stat adl-stat--highlight">
               <span className="adl-stat-value adl-stat-value--green">
                 ${totalPagarHoy.toLocaleString("es-CL")}
@@ -702,17 +721,17 @@ export default function AssignDelivery() {
                                     <span className="adl-delivery-opt-avatar">
                                       {u.name?.[0]?.toUpperCase() ?? "?"}
                                     </span>
-                                    {u.name.toUpperCase()}
+                                    {u.name}
                                   </span>
                                   <span className="adl-delivery-opt-meta">
+                                    <span className="adl-city-count">
+                                      {count}
+                                    </span>
                                     {paid > 0 && (
                                       <span className="adl-delivery-opt-paid">
                                         ${paid.toLocaleString("es-CL")}
                                       </span>
                                     )}
-                                    <span className="adl-city-count">
-                                      {count}
-                                    </span>
                                   </span>
                                 </button>
                               );
@@ -723,104 +742,96 @@ export default function AssignDelivery() {
                     </div>
                   )}
 
-                  {/* ── Filtro por COMUNA ── */}
-                  {cityOptionsAssigned.length > 2 && (
-                    <div className="adl-filter-group">
-                      <span className="adl-filter-label">COMUNA</span>
-                      <div className="adl-city-wrapper" ref={cityRef}>
-                        <button
-                          className={`adl-city-btn ${
-                            cityFilter !== "all" ? "adl-city-btn--active" : ""
+                  {/* ── Filtro por ciudad ── */}
+                  <div className="adl-filter-group">
+                    <span className="adl-filter-label">CIUDAD</span>
+                    <div className="adl-city-wrapper" ref={cityRef}>
+                      <button
+                        className={`adl-city-btn ${
+                          cityFilter !== "all" ? "adl-city-btn--active" : ""
+                        }`}
+                        onClick={() => setCityOpen((v) => !v)}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        {cityFilter === "all" ? "TODAS" : cityFilter}
+                        {cityFilter !== "all" && (
+                          <span
+                            className="adl-city-clear"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCityFilter("all");
+                            }}
+                          >
+                            ×
+                          </span>
+                        )}
+                        <span
+                          className={`adl-city-chevron ${
+                            cityOpen ? "adl-city-chevron--open" : ""
                           }`}
-                          onClick={() => setCityOpen((v) => !v)}
                         >
                           <svg
-                            width="12"
-                            height="12"
+                            width="10"
+                            height="10"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
-                            strokeWidth="2"
+                            strokeWidth="2.5"
                           >
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                            <circle cx="12" cy="10" r="3" />
+                            <polyline points="6 9 12 15 18 9" />
                           </svg>
-                          {cityFilter === "all"
-                            ? "TODAS"
-                            : cityFilter.toUpperCase()}
-                          {cityFilter !== "all" && (
-                            <span
-                              className="adl-city-clear"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCityFilter("all");
-                              }}
-                            >
-                              ×
-                            </span>
-                          )}
-                          <span
-                            className={`adl-city-chevron ${
-                              cityOpen ? "adl-city-chevron--open" : ""
-                            }`}
-                          >
-                            <svg
-                              width="10"
-                              height="10"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                            >
-                              <polyline points="6 9 12 15 18 9" />
-                            </svg>
-                          </span>
-                        </button>
-                        {cityOpen && (
-                          <div className="adl-city-dropdown">
-                            {cityOptionsAssigned.map((city) => {
-                              const count =
-                                city === "all"
-                                  ? assignments.length
-                                  : assignments.filter(
-                                      (a) => a.order?.receiverCity === city
-                                    ).length;
-                              return (
-                                <button
-                                  key={city}
-                                  className={`adl-city-option ${
-                                    cityFilter === city
-                                      ? "adl-city-option--active"
-                                      : ""
-                                  }`}
-                                  onClick={() => {
-                                    setCityFilter(city);
-                                    setCityOpen(false);
-                                  }}
-                                >
-                                  {city === "all"
-                                    ? "TODAS LAS COMUNAS"
-                                    : city.toUpperCase()}
-                                  <span className="adl-city-count">
-                                    {count}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+                        </span>
+                      </button>
+                      {cityOpen && (
+                        <div className="adl-city-dropdown">
+                          {cityOptionsAssigned.map((city) => {
+                            const count =
+                              city === "all"
+                                ? assignments.length
+                                : assignments.filter(
+                                    (a) => a.order?.receiverCity === city
+                                  ).length;
+                            return (
+                              <button
+                                key={city}
+                                className={`adl-city-option ${
+                                  cityFilter === city
+                                    ? "adl-city-option--active"
+                                    : ""
+                                }`}
+                                onClick={() => {
+                                  setCityFilter(city);
+                                  setCityOpen(false);
+                                }}
+                              >
+                                {city === "all" ? "TODAS LAS CIUDADES" : city}
+                                <span className="adl-city-count">{count}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
 
-                  {/* ── Filtro por FECHA ── */}
+                  {/* ── Filtro por fecha ── */}
                   <div className="adl-filter-group">
-                    <span className="adl-filter-label">FECHA ASIGNACIÓN</span>
-                    <div className="adl-date-wrapper">
+                    <span className="adl-filter-label">PERÍODO</span>
+                    <div style={{ position: "relative" }}>
                       <button
                         ref={calendarBtn}
-                        className={`adl-date-btn ${
-                          startDate || endDate ? "adl-date-btn--active" : ""
+                        className={`adl-city-btn ${
+                          startDate || endDate ? "adl-city-btn--active" : ""
                         }`}
                         onClick={() => setCalendarOpen((v) => !v)}
                       >
@@ -833,12 +844,14 @@ export default function AssignDelivery() {
                           strokeWidth="2"
                         >
                           <rect x="3" y="4" width="18" height="18" rx="2" />
-                          <path d="M16 2v4M8 2v4M3 10h18" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
                         {dateLabel}
                         {(startDate || endDate) && (
                           <span
-                            className="adl-date-clear"
+                            className="adl-city-clear"
                             onClick={(e) => {
                               e.stopPropagation();
                               setDateRange([null, null]);
@@ -847,38 +860,40 @@ export default function AssignDelivery() {
                             ×
                           </span>
                         )}
+                        <span
+                          className={`adl-city-chevron ${
+                            calendarOpen ? "adl-city-chevron--open" : ""
+                          }`}
+                        >
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </span>
                       </button>
                       {calendarOpen && (
-                        <div ref={calendarRef} className="adl-calendar-popup">
+                        <div
+                          className="adl-calendar-dropdown"
+                          ref={calendarRef}
+                        >
                           <DatePicker
                             selected={startDate}
                             onChange={(update) => {
                               setDateRange(update);
-                              if (update[0] && update[1])
-                                setCalendarOpen(false);
+                              if (update[1]) setCalendarOpen(false);
                             }}
                             startDate={startDate}
                             endDate={endDate}
                             selectsRange
                             inline
+                            maxDate={new Date()}
                           />
-                          <div className="adl-cal-footer">
-                            <button
-                              className="adl-cal-clear"
-                              onClick={() => {
-                                setDateRange([null, null]);
-                                setCalendarOpen(false);
-                              }}
-                            >
-                              Limpiar
-                            </button>
-                            <button
-                              className="adl-cal-close"
-                              onClick={() => setCalendarOpen(false)}
-                            >
-                              Cerrar
-                            </button>
-                          </div>
                         </div>
                       )}
                     </div>
@@ -887,12 +902,12 @@ export default function AssignDelivery() {
               )}
             </div>
 
-            {/* ── Filtros activos ── */}
-            {hasActiveFilters && tab === "assigned" && (
+            {/* Info filtros activos */}
+            {tab === "assigned" && hasActiveFilters && (
               <div className="adl-active-filters">
-                <span>
-                  {filteredAssignments.length} resultado
-                  {filteredAssignments.length !== 1 ? "s" : ""}
+                <span className="adl-active-filters-text">
+                  Mostrando {filteredAssignments.length} asignación
+                  {filteredAssignments.length !== 1 ? "es" : ""}
                   {deliveryFilter !== "all" && (
                     <span style={{ color: "#34d399", marginLeft: 8 }}>
                       · {selectedDeliveryName}
@@ -933,16 +948,25 @@ export default function AssignDelivery() {
               </div>
             )}
             {tab === "assigned" && (
-               <button className="adl-report-btn" onClick={() => setReportModal(true)}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" strokeWidth="2.2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/>
-          <line x1="16" y1="17" x2="8" y2="17"/>
-        </svg>
-        EXPORTAR PDF
-      </button>
+              <button
+                className="adl-report-btn"
+                onClick={() => setReportModal(true)}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                EXPORTAR PDF
+              </button>
             )}
           </div>
 
@@ -966,288 +990,371 @@ export default function AssignDelivery() {
               <span className="adl-spin adl-spin--lg" />
             </div>
           ) : tab === "pending" ? (
-            /* ── Tab: ASIGNAR (scanner) ── */
+            /* ══════════════════════════════
+               TAB: ASIGNAR — flujo bulk
+            ══════════════════════════════ */
             <div className="adl-scan-section">
-              <div className="adl-scan-form-wrapper">
-                <div className="adl-scan-header">
-                  <p className="adl-scan-label">
-                    ESCANEAR O INGRESAR N° DE ORDEN
-                  </p>
-                  <span
-                    className={`adl-scan-indicator ${
-                      scannerMode ? "adl-scan-indicator--active" : ""
+              {/* ── PASO 1: elegir delivery ── */}
+              <div className="adl-bulk-step">
+                <p className="adl-label">ELEGIR DELIVERY</p>
+                <div className="adl-city-wrapper" ref={deliverySelectRef}>
+                  <button
+                    className={`adl-city-btn ${
+                      selectedUser ? "adl-city-btn--active" : ""
                     }`}
+                    onClick={() => setDeliverySelectOpen((v) => !v)}
                   >
-                    <span className="adl-scan-dot" />
-                    {scannerMode ? "LEYENDO..." : "LISTO"}
-                  </span>
-                </div>
-                <form className="adl-scan-form" onSubmit={handleScan}>
-                  <div className="adl-scan-input-wrapper">
                     <svg
-                      className="adl-scan-icon"
-                      width="18"
-                      height="18"
+                      width="12"
+                      height="12"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
+                    >
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                    </svg>
+                    {selectedUser
+                      ? deliveryUsers
+                          .find((u) => u.id === selectedUser)
+                          ?.name?.toUpperCase()
+                      : "SELECCIONAR DELIVERY"}
+                    {selectedUser && (
+                      <span
+                        className="adl-city-clear"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedUser("");
+                          setPendingOrders([]);
+                          setScanError(null);
+                          setScanWarning(null);
+                          setBulkDone(null);
+                        }}
+                      >
+                        ×
+                      </span>
+                    )}
+                    <span
+                      className={`adl-city-chevron ${
+                        deliverySelectOpen ? "adl-city-chevron--open" : ""
+                      }`}
+                    >
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </span>
+                  </button>
+
+                  {deliverySelectOpen && (
+                    <div className="adl-city-dropdown">
+                      {deliveryUsers.length === 0 ? (
+                        <p
+                          className="adl-no-delivery"
+                          style={{ padding: "10px 14px" }}
+                        >
+                          No hay usuarios con rol Delivery activos
+                        </p>
+                      ) : (
+                        deliveryUsers.map((u) => (
+                          <button
+                            key={u.id}
+                            className={`adl-city-option ${
+                              selectedUser === u.id
+                                ? "adl-city-option--active"
+                                : ""
+                            }`}
+                            onClick={() => {
+                              setSelectedUser(u.id);
+                              setPendingOrders([]);
+                              setScanError(null);
+                              setScanWarning(null);
+                              setBulkDone(null);
+                              setDeliverySelectOpen(false);
+                            }}
+                          >
+                            <span className="adl-delivery-opt-name">
+                              <span className="adl-delivery-opt-avatar">
+                                {u.name?.[0]?.toUpperCase() ?? "?"}
+                              </span>
+                              {u.name}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── PASO 2: escanear paquetes ── */}
+              <div
+                className={`adl-bulk-step${
+                  !selectedUser ? " adl-bulk-step--disabled" : ""
+                }`}
+              >
+                <p className="adl-label">② ESCANEAR PAQUETES</p>
+                <div className="adl-scan-form-wrapper">
+                  <div className="adl-scan-header">
+                    <p className="adl-scan-label">
+                      ESCANEAR O INGRESAR N° DE ORDEN
+                    </p>
+                    <span
+                      className={`adl-scan-indicator ${
+                        scannerMode ? "adl-scan-indicator--active" : ""
+                      }`}
+                    >
+                      <span className="adl-scan-dot" />
+                      {scannerMode ? "LEYENDO..." : "LISTO"}
+                    </span>
+                  </div>
+                  <form className="adl-scan-form" onSubmit={handleScan}>
+                    <div className="adl-scan-input-wrapper">
+                      <svg
+                        className="adl-scan-icon"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect x="3" y="7" width="3" height="10" rx="1" />
+                        <rect x="8" y="5" width="2" height="14" rx="1" />
+                        <rect x="12" y="7" width="4" height="10" rx="1" />
+                        <rect x="18" y="5" width="3" height="14" rx="1" />
+                      </svg>
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        className={`adl-scan-input ${
+                          scannerMode ? "adl-scan-input--scanning" : ""
+                        }`}
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder={
+                          selectedUser
+                            ? "ID de orden o escanea el código..."
+                            : "Primero elige un delivery..."
+                        }
+                        disabled={!selectedUser}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck={false}
+                      />
+                      {code && (
+                        <button
+                          type="button"
+                          className="adl-scan-clear"
+                          onClick={() => {
+                            setCode("");
+                            inputRef.current?.focus();
+                          }}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="submit"
+                      className="adl-btn-primary"
+                      disabled={scanLoading || !selectedUser}
+                    >
+                      {scanLoading ? (
+                        <span className="adl-spin" />
+                      ) : (
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Botón de cámara — solo en mobile */}
+                    <button
+                      type="button"
+                      className="adl-btn-camera"
+                      onClick={() => setCameraOpen(true)}
+                      disabled={!selectedUser}
+                      title="Escanear con cámara"
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                    </button>
+                  </form>
+                  <p className="adl-scan-hint">
+                    Ingresá el ID, escaneá con la pistola, o usá la cámara del
+                    celular
+                  </p>
+                </div>
+
+                {scanWarning && (
+                  <div className="adl-scan-warning">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    {scanWarning}
+                  </div>
+                )}
+
+                {scanError && (
+                  <div className="adl-scan-error">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    {scanError}
+                  </div>
+                )}
+
+                {/* Lista acumulada de órdenes escaneadas */}
+                {pendingOrders.length > 0 && (
+                  <div className="adl-pending-list">
+                    {pendingOrders.map((o, idx) => (
+                      <div key={o.id} className="adl-pending-item">
+                        <span className="adl-pending-idx">{idx + 1}</span>
+                        <div className="adl-pending-info">
+                          <span className="adl-pending-id">
+                            #{o.packId ?? o.displayIdentifier ?? o.id}
+                          </span>
+                          <span className="adl-pending-buyer">
+                            {o.buyerNickname ?? o.buyerName ?? "—"}
+                          </span>
+                          {o.pickingStatus !== "packed" && (
+                            <span className="adl-pending-warn">
+                              ⚠ {o.pickingStatus}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          className="adl-pending-remove"
+                          onClick={() =>
+                            setPendingOrders((prev) =>
+                              prev.filter((x) => x.id !== o.id)
+                            )
+                          }
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {pendingOrders.length === 0 && !scanError && !scanLoading && (
+                  <div className="adl-empty">
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="0.8"
                     >
                       <rect x="3" y="7" width="3" height="10" rx="1" />
                       <rect x="8" y="5" width="2" height="14" rx="1" />
                       <rect x="12" y="7" width="4" height="10" rx="1" />
                       <rect x="18" y="5" width="3" height="14" rx="1" />
                     </svg>
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      className={`adl-scan-input ${
-                        scannerMode ? "adl-scan-input--scanning" : ""
-                      }`}
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      placeholder="ID de orden o escanea el código..."
-                      autoComplete="off"
-                      autoCorrect="off"
-                      spellCheck={false}
-                    />
-                    {code && (
-                      <button
-                        type="button"
-                        className="adl-scan-clear"
-                        onClick={() => {
-                          setCode("");
-                          inputRef.current?.focus();
-                        }}
-                      >
-                        ×
-                      </button>
-                    )}
+                    <p>ESPERANDO ESCANEO</p>
                   </div>
-                  <button
-                    type="submit"
-                    className="adl-btn-primary"
-                    disabled={scanLoading}
-                  >
-                    {scanLoading ? (
-                      <span className="adl-spin" />
-                    ) : (
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="M21 21l-4.35-4.35" />
-                      </svg>
-                    )}
-                  </button>
-
-                  {/* Botón de cámara — solo en mobile */}
-                  <button
-                    type="button"
-                    className="adl-btn-camera"
-                    onClick={() => setCameraOpen(true)}
-                    title="Escanear con cámara"
-                  >
-                    <svg
-                      width="17"
-                      height="17"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
-                  </button>
-                </form>
-                <p className="adl-scan-hint">
-                  Ingresá el ID, escaneá con la pistola, o usá la cámara del
-                  celular
-                </p>
+                )}
               </div>
 
-              {scanWarning && (
-                <div className="adl-scan-warning">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+              {/* ── PASO 3: confirmar ── */}
+              {pendingOrders.length > 0 && (
+                <div className="adl-bulk-step">
+                  <p className="adl-label">③ CONFIRMAR ASIGNACIÓN</p>
+                  <div
+                    className="adl-found-footer"
+                    style={{ justifyContent: "flex-start", marginBottom: 0 }}
                   >
-                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                    <line x1="12" y1="9" x2="12" y2="13" />
-                    <line x1="12" y1="17" x2="12.01" y2="17" />
-                  </svg>
-                  {scanWarning}
-                </div>
-              )}
-
-              {scanError && (
-                <div className="adl-scan-error">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                  {scanError}
-                </div>
-              )}
-
-              {foundOrder && (
-                <div className="adl-found-card">
-                  <div className="adl-found-header">
-                    <div>
-                      <p className="adl-found-id">
-                        #{foundOrder.packId ?? foundOrder.id}
-                      </p>
-                      <p className="adl-found-buyer">
-                        {foundOrder.buyerNickname ?? "—"}
-                      </p>
-                      {foundOrder.receiverCity && (
-                        <p className="adl-found-city">
-                          {foundOrder.receiverCity}
-                        </p>
-                      )}
-                    </div>
-                    <div className="adl-found-thumbs">
-                      {foundOrder.orderItems?.slice(0, 4).map((item) =>
-                        item.thumbnail ? (
-                          <img
-                            key={item.id}
-                            src={item.thumbnail}
-                            alt={item.title}
-                            className="dar-thumb"
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <div
-                            key={item.id}
-                            className="dar-thumb-placeholder"
-                            title={item.title}
-                          >
-                            📦
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="adl-found-divider" />
-
-                  <p className="adl-label">ASIGNAR A</p>
-                  <div className="adl-delivery-list">
-                    {deliveryUsers.length === 0 ? (
-                      <p className="adl-no-delivery">
-                        No hay usuarios con rol Delivery activos
-                      </p>
-                    ) : (
-                      deliveryUsers.map((u) => (
-                        <button
-                          key={u.id}
-                          className={`adl-delivery-option ${
-                            selectedUser === u.id
-                              ? "adl-delivery-option--active"
-                              : ""
-                          }`}
-                          onClick={() => setSelectedUser(u.id)}
-                        >
-                          <span className="adl-delivery-avatar">
-                            {u.name?.[0]?.toUpperCase() ?? "?"}
-                          </span>
-                          <span className="adl-delivery-name">{u.name}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-
-                  <div className="adl-field" style={{ marginTop: 14 }}>
-                    <p className="adl-label">NOTAS (opcional)</p>
-                    <input
-                      className="adl-input"
-                      placeholder="Instrucciones para el delivery..."
-                      value={assignNotes}
-                      onChange={(e) => setAssignNotes(e.target.value)}
-                    />
-                  </div>
-
-                  {scanError && (
-                    <div className="adl-scan-error" style={{ marginTop: 10 }}>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>
-                      {scanError}
-                    </div>
-                  )}
-
-                  <div className="adl-found-footer">
                     <button
                       className="adl-btn-ghost"
                       onClick={() => {
-                        setFoundOrder(null);
-                        setScanWarning(null);
+                        setPendingOrders([]);
                         setScanError(null);
+                        setScanWarning(null);
+                        setBulkDone(null);
                       }}
                     >
-                      Cancelar
+                      Limpiar lista
                     </button>
                     <button
                       className="adl-btn-primary"
-                      onClick={handleAssignFound}
-                      disabled={assigning || !selectedUser}
+                      onClick={handleBulkAssign}
+                      disabled={bulkAssigning}
                     >
-                      {assigning && <span className="adl-spin" />}
-                      {assigning ? "ASIGNANDO..." : "CONFIRMAR ASIGNACIÓN"}
+                      {bulkAssigning && <span className="adl-spin" />}
+                      {bulkAssigning
+                        ? "ASIGNANDO..."
+                        : `CONFIRMAR ${pendingOrders.length} ORDEN${
+                            pendingOrders.length !== 1 ? "ES" : ""
+                          }`}
                     </button>
                   </div>
                 </div>
               )}
 
-              {!foundOrder && !scanError && !scanLoading && (
-                <div className="adl-empty">
-                  <svg
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="0.8"
-                  >
-                    <rect x="3" y="7" width="3" height="10" rx="1" />
-                    <rect x="8" y="5" width="2" height="14" rx="1" />
-                    <rect x="12" y="7" width="4" height="10" rx="1" />
-                    <rect x="18" y="5" width="3" height="14" rx="1" />
-                  </svg>
-                  <p>ESPERANDO ESCANEO</p>
+              {/* Errores parciales post-confirmación */}
+              {bulkDone && bulkDone.errors.length > 0 && (
+                <div className="adl-modal-error">
+                  <strong>
+                    ✓ {bulkDone.assigned} asignada
+                    {bulkDone.assigned !== 1 ? "s" : ""} — ✗{" "}
+                    {bulkDone.errors.length} con error:
+                  </strong>
+                  {bulkDone.errors.map((e, i) => (
+                    <div key={i} style={{ marginTop: 4 }}>
+                      {e}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          ) : /* ── Tab: ASIGNADAS ── */
+          ) : /* ══════════════════════════════
+               TAB: ASIGNADAS — sin cambios
+          ══════════════════════════════ */
           filteredAssignments.length === 0 ? (
             <div className="adl-empty">
               <svg

@@ -1083,9 +1083,101 @@
   margin-top: 16px;
 }
 
-/* ═══════════════════════════════════════════
-   AGREGAR A AssignDelivery.css
-═══════════════════════════════════════════ */
+/* ════════════════════════════════════════
+   BULK ASSIGNMENT — agregar al final de AssignDelivery.css
+════════════════════════════════════════ */
+
+/* ── Steps del flujo bulk ── */
+.adl-bulk-step {
+  margin-bottom: 28px;
+}
+
+.adl-bulk-step--disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ── Lista acumulada de órdenes escaneadas ── */
+.adl-pending-list {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.adl-pending-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  transition: border-color 0.15s;
+  animation: adl-up 0.2s ease both;
+}
+
+.adl-pending-item:hover {
+  border-color: var(--border-hover);
+}
+
+.adl-pending-idx {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: var(--text-faint);
+  min-width: 14px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.adl-pending-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.adl-pending-id {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.adl-pending-buyer {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adl-pending-warn {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: #f59e0b;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.adl-pending-remove {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.adl-pending-remove:hover {
+  color: #f87171;
+}
 
 /* ── Navegación de días (header) ── */
 .adl-header {
