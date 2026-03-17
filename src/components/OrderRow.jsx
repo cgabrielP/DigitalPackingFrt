@@ -120,6 +120,10 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
     cls: "pending",
   };
   const shipCat = SHIPPING_CATEGORY[order.shippingCategory];
+  const canPrintLabel =
+    order.shippingId &&
+    !['shipped', 'delivered', 'not_delivered'].includes(order.shippingStatus) &&
+    order.shippingSubstatus !== 'ready_to_print';
 
   return (
     <tr className="order-row" style={{ animationDelay: `${index * 40}ms` }}>
@@ -199,7 +203,7 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
 
       <td className="td-date">{formatDate(order.lastUpdatedAt)}</td>
       <td>
-        {order.shippingId &&!['shipped', 'delivered', 'not_delivered'].includes(order.shippingStatus) &&(
+        {canPrintLabel && (
           <button
             className="label-btn"
             onClick={() => openLabel(order)}
@@ -213,7 +217,7 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
             </svg>
             ETIQUETA
           </button>
-        ) }
+        )}
       </td>
     </tr>
   );

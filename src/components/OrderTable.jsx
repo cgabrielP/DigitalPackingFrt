@@ -33,7 +33,10 @@ const formatDate = (dateStr) => {
 // ─── Mobile accordion card ───────────────────────────────────────────────────
 const OrderCard = ({ order, index, showUrgency = false }) => {
   const [open, setOpen] = useState(false);
-
+  const canPrintLabel =
+    order.shippingId &&
+    !['shipped', 'delivered', 'not_delivered'].includes(order.shippingStatus) &&
+    order.shippingSubstatus !== 'ready_to_print';
   const mlStatus = STATUS_ML[order.status] || {
     label: order.status?.toUpperCase() || "—",
     cls: "other",
@@ -192,16 +195,15 @@ const OrderCard = ({ order, index, showUrgency = false }) => {
           </dl>
 
           {/* Etiqueta — mobile */}
-          {order.shippingId &&!['shipped', 'delivered', 'not_delivered'].includes(order.shippingStatus) && (
+          {canPrintLabel && (
             <div className="ocard__label-action">
               <button
                 className="label-btn label-btn--full"
                 onClick={() => {
                   const token = localStorage.getItem("app_token");
                   const id = order.displayIdentifier ?? order.id;
-                  const url = `${
-                    import.meta.env.VITE_API_URL ?? ""
-                  }/orders/${id}/label?token=${token}`;
+                  const url = `${import.meta.env.VITE_API_URL ?? ""
+                    }/orders/${id}/label?token=${token}`;
                   window.open(url, "_blank");
                 }}
               >
