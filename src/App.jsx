@@ -20,35 +20,42 @@ import Upgrade from './pages/Upgrade'
    GUARDS
 ───────────────────────────────────────── */
 
-/** Ruta privada — cualquier usuario autenticado */
 function PrivateRoute({ children }) {
   if (!isTokenValid()) {
     localStorage.removeItem('app_token')
     return <Navigate to="/login" replace />
   }
+  try {
+    const payload = JSON.parse(atob(localStorage.getItem('app_token').split('.')[1]))
+    if (payload.plan === 'TRIAL' && payload.trialEndsAt) {
+      if (new Date() > new Date(payload.trialEndsAt)) {
+        return <Navigate to="/upgrade" replace />
+      }
+    }
+  } catch {
+    return <Navigate to="/login" replace />
+  }
   return children
 }
 
-/** Ruta privada solo para ciertos roles
- *  @param {string[]} roles  ej: ['ADMIN']
- */
 function RoleRoute({ children, roles }) {
   if (!isTokenValid()) {
     localStorage.removeItem('app_token')
     return <Navigate to="/login" replace />
   }
-
   try {
-    const token = localStorage.getItem('app_token')
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    const payload = JSON.parse(atob(localStorage.getItem('app_token').split('.')[1]))
+    if (payload.plan === 'TRIAL' && payload.trialEndsAt) {
+      if (new Date() > new Date(payload.trialEndsAt)) {
+        return <Navigate to="/upgrade" replace />
+      }
+    }
     if (!roles.includes(payload.role)) {
-      // Autenticado pero sin permiso → redirigir a órdenes
       return <Navigate to="/orders" replace />
     }
   } catch {
     return <Navigate to="/login" replace />
   }
-
   return children
 }
 

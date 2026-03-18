@@ -1,4 +1,3 @@
-// utils/auth.js
 export const getToken = () => localStorage.getItem('app_token')
 
 export const isTokenValid = () => {
