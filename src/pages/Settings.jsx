@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../utils/auth";
+import { apiFetch, logout } from "../utils/auth";
 import Header from "../components/Header";
 import "./Settings.css";
 import Layout from "../components/Layout";
@@ -108,7 +108,7 @@ export default function Settings() {
   /* ── Carga de cuentas ── */
   const loadAccounts = async () => {
     try {
-      const res = await fetch(`${API_URL}/auth/ml/accounts`, {
+      const res = await apiFetch(`${API_URL}/auth/ml/accounts`, {
         headers: getHeaders(),
       });
       if (res.status === 401) {

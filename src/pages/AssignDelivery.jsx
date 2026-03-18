@@ -7,6 +7,7 @@ import CameraScanner from "../components/CameraScanner";
 import "./AssignDelivery.css";
 import ReportModal from "../components/ReportModal";
 import { generateDeliveryReport } from "../utils/reports.js";
+import { apiFetch } from "../utils/auth.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const getHeaders = () => ({
@@ -184,11 +185,11 @@ export default function AssignDelivery() {
     setLoading(true);
     try {
       const [ordersRes, assignmentsRes, usersRes] = await Promise.all([
-        fetch(`${API_URL}/orders`, { headers: getHeaders() }),
-        fetch(`${API_URL}/delivery/assignments?date=${date}`, {
+        apiFetch(`${API_URL}/orders`, { headers: getHeaders() }),
+        apiFetch(`${API_URL}/delivery/assignments?date=${date}`, {
           headers: getHeaders(),
         }),
-        fetch(`${API_URL}/admin/users`, { headers: getHeaders() }),
+        apiFetch(`${API_URL}/admin/users`, { headers: getHeaders() }),
       ]);
       const [ordersData, assignmentsData, usersData] = await Promise.all([
         ordersRes.json(),
@@ -387,7 +388,7 @@ export default function AssignDelivery() {
     await Promise.all(
       pendingOrders.map(async (order) => {
         try {
-          const res = await fetch(`${API_URL}/delivery/assign`, {
+          const res = await apiFetch(`${API_URL}/delivery/assign`, {
             method: "POST",
             headers: getHeaders(),
             body: JSON.stringify({
@@ -429,7 +430,7 @@ export default function AssignDelivery() {
   const handleUnassign = async (orderId, displayId) => {
     if (!confirm(`¿Quitar la asignación de la orden #${displayId}?`)) return;
     try {
-      const res = await fetch(`${API_URL}/delivery/assign/${orderId}`, {
+      const res = await apiFetch(`${API_URL}/delivery/assign/${orderId}`, {
         method: "DELETE",
         headers: getHeaders(),
       });

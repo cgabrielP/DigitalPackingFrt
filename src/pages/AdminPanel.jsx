@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../utils/auth";
+import { apiFetch, logout } from "../utils/auth";
 import Header from "../components/Header";
 import "./AdminPanel.css";
 import Layout from "../components/Layout";
@@ -137,7 +137,7 @@ const CreateUserModal = ({ onClose, onCreated }) => {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/admin/users`, {
+      const res = await apiFetch(`${API_URL}/admin/users`, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(form),
@@ -271,7 +271,7 @@ export default function AdminPanel() {
   /* ── Carga de usuarios ── */
   const loadUsers = async () => {
     try {
-      const res = await fetch(`${API_URL}/admin/users`, {
+      const res = await apiFetch(`${API_URL}/admin/users`, {
         headers: getHeaders(),
       });
       if (res.status === 401) {
@@ -293,7 +293,7 @@ export default function AdminPanel() {
 
   const loadPaymentConfig = async () => {
     try {
-      const res = await fetch(`${API_URL}/delivery/config`, { headers: getHeaders() })
+      const res = await apiFetch(`${API_URL}/delivery/config`, { headers: getHeaders() })
       const data = await res.json()
       if (res.ok && data.amountPerDelivery) {
         setPaymentConfig(data)
@@ -322,7 +322,7 @@ export default function AdminPanel() {
     if (!confirm(`¿Desactivar a ${userName}?`)) return;
     setDeleting(userId);
     try {
-      const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+      const res = await apiFetch(`${API_URL}/admin/users/${userId}`, {
         method: "DELETE",
         headers: getHeaders(),
       });
@@ -340,7 +340,7 @@ const handleSaveConfig = async () => {
   if (!paymentAmount || isNaN(paymentAmount)) return
   setSavingConfig(true)
   try {
-    const res  = await fetch(`${API_URL}/delivery/config`, {
+    const res  = await apiFetch(`${API_URL}/delivery/config`, {
       method:  'POST',
       headers: getHeaders(),
       body:    JSON.stringify({ amountPerDelivery: Number(paymentAmount) }),

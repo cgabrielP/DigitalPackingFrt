@@ -14,6 +14,7 @@ import OrderHistory from './pages/OrderHistory'
 import AssignDelivery from './pages/AssignDelivery'
 import MyDeliveries from './pages/MyDeliveries'
 import PackingLog from './pages/PackingLog'
+import Upgrade from './pages/Upgrade'
 
 /* ─────────────────────────────────────────
    GUARDS
@@ -60,6 +61,7 @@ function App() {
         {/* ── Públicas ── */}
         <Route path="/login" element={<Login />} />
         <Route path="/auth/success" element={<AuthSuccess />} />
+        <Route path="/upgrade" element={<Upgrade />} />
 
         {/* ── Privadas — cualquier rol autenticado ── */}
         <Route

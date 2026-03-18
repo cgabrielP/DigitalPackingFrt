@@ -4,6 +4,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import OrderTable from "../components/OrderTable";
 import "./Orders.css";
 import Layout from "../components/Layout";
+import { apiFetch } from "../utils/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -207,7 +208,7 @@ export default function Orders() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/orders`, { headers: getHeaders() });
+      const res = await apiFetch(`${API_URL}/orders`, { headers: getHeaders() });
       if (res.status === 401) { logout(); return; }
       const data = await res.json();
       setOrders(data);
@@ -221,7 +222,7 @@ export default function Orders() {
   const handleSync = async () => {
     try {
       setSyncing(true);
-      const res = await fetch(`${API_URL}/orders/sync`, { method: "POST", headers: getHeaders() });
+      const res = await apiFetch(`${API_URL}/orders/sync`, { method: "POST", headers: getHeaders() });
       if (!res.ok) throw new Error();
       showToast("✓ Órdenes sincronizadas");
       await loadOrders();

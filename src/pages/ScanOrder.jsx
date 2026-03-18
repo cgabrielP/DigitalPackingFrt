@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import "./ScanOrder.css";
 import Layout from "../components/Layout";
 import CameraScanner from "../components/CameraScanner";
+import { apiFetch } from "../utils/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -54,7 +55,7 @@ export default function ScanOrder() {
   setPacked(false);
 
   try {
-    const res = await fetch(`${API_URL}/orders/scan`, {
+    const res = await apiFetch(`${API_URL}/orders/scan`, {
       method:  "POST",
       headers: getHeaders(),
       body:    JSON.stringify({ code: trimmed }),
@@ -62,7 +63,7 @@ export default function ScanOrder() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Error al escanear");
 
-    await fetch(`${API_URL}/api/log`, {
+    await apiFetch(`${API_URL}/api/log`, {
       method:  "POST",
       headers: getHeaders(),
       body:    JSON.stringify({ orderId: data.packedOrders?.[0] ?? data.id, action: "scanned" }),
@@ -90,13 +91,13 @@ export default function ScanOrder() {
   const handlePack = async (counts) => {
     if (!order) return;
     try {
-      const res = await fetch(
+      const res = await apiFetch(
         `${API_URL}/orders/pack/${order.displayIdentifier}`,
         { method: "POST", headers: getHeaders() }
       );
       if (!res.ok) throw new Error("Error al marcar como empacado");
 
-      await fetch(`${API_URL}/api/log`, {
+      await apiFetch(`${API_URL}/api/log`, {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify({ orderId: order.packedOrders?.[0] ?? order.id, action: "packed" }),
@@ -116,7 +117,7 @@ export default function ScanOrder() {
     setSyncing(true);
     setSyncMsg(null);
     try {
-      const res = await fetch(`${API_URL}/orders/sync`, {
+      const res = await apiFetch(`${API_URL}/orders/sync`, {
         method: "POST",
         headers: getHeaders(),
       });

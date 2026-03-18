@@ -19,3 +19,16 @@ export const logout = () => {
   localStorage.removeItem('app_token')
   window.location.href = '/login'
 }
+export const apiFetch = async (url, options = {}) => {
+  const res = await fetch(url, options);
+
+  if (res.status === 403) {
+    const data = await res.json();
+    if (data.error === "trial_expired") {
+      window.location.href = "/upgrade";
+      return; 
+    }
+  }
+
+  return res;
+};

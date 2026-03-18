@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Layout from '../components/Layout'
 import LogTable from '../components/LogTable'
 import './PackingLog.css'
+import { apiFetch } from '../utils/auth'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -45,7 +46,7 @@ export default function PackingLog() {
     try {
       const params = new URLSearchParams({ from: date, to: date + 'T23:59:59' })
       if (userFilter !== 'all') params.set('userId', userFilter)
-      const res  = await fetch(`${API_URL}/api/log?${params}`, { headers: getHeaders() })
+      const res  = await apiFetch(`${API_URL}/api/log?${params}`, { headers: getHeaders() })
       const data = await res.json()
       setLogs(Array.isArray(data) ? data : [])
     } catch (e) {

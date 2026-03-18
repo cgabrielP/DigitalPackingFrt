@@ -5,6 +5,7 @@ import OrderTable from "../components/OrderTable";
 import "./Orders.css";
 import Layout from "../components/Layout";
 import { isCancelled, isFinished } from "./Orders";
+import { apiFetch } from "../utils/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -68,7 +69,7 @@ export default function OrderHistory() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/orders`, { headers: getHeaders() });
+      const res = await apiFetch(`${API_URL}/orders`, { headers: getHeaders() });
       if (res.status === 401) { logout(); return; }
       const data = await res.json();
       setOrders(data);

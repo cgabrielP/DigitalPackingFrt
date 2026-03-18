@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import Layout from '../components/Layout'
 import DeliveryAssignmentRow from '../components/DeliveryAssignmentRow'
 import './MyDeliveries.css'
+import { apiFetch } from '../utils/auth'
 
 const API_URL = import.meta.env.VITE_API_URL
 const getHeaders = () => ({
@@ -36,7 +37,7 @@ export default function MyDeliveries() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const res  = await fetch(`${API_URL}/delivery/assignments?date=${date}`, { headers: getHeaders() })
+      const res  = await apiFetch(`${API_URL}/delivery/assignments?date=${date}`, { headers: getHeaders() })
       const data = await res.json()
       setAssignments(Array.isArray(data) ? data : [])
     } catch {
