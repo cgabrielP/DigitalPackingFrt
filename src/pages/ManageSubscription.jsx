@@ -333,7 +333,7 @@ export default function ManageSubscription() {
                     <p className="st-account-meta">Contactanos por WhatsApp</p>
                   </div>
                   <a
-                    href={`https://wa.me/${import.meta.env.WHATSAPP_NUMBER}?text=Hola,%20necesito%20asistencia%20con%20mi%20suscripción%20en%20DigitalPacking`}
+                    href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=Hola,%20necesito%20asistencia%20con%20mi%20suscripción%20en%20DigitalPacking`}
                     target="_blank"
                     rel="noreferrer"
                     className="st-add-btn"

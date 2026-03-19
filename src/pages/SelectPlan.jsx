@@ -46,7 +46,7 @@ export default function SelectPlan() {
     ? `Hola, quiero activar el plan anual de DigitalPacking ($${fmt(PRICE_ANNUAL_TOTAL)}/año)`
     : `Hola, quiero activar el plan mensual de DigitalPacking ($${fmt(PRICE_MONTHLY)}/mes)`
 
-  const waUrl = `https://wa.me/${import.meta.envWHATSAPP_NUMBER}?text=${encodeURIComponent(waMsg)}`
+  const waUrl = `https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${encodeURIComponent(waMsg)}`
 
   const saving = Math.round((1 - PRICE_ANNUAL_MONTH / PRICE_MONTHLY) * 100)
 
