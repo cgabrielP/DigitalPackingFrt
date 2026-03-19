@@ -4,7 +4,6 @@ import Layout from "../components/Layout";
 import "../pages/Settings.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const WHATSAPP_NUMBER     = process.env.WHATSAPP_NUMBER
 const getHeaders = () => ({
   Authorization: `Bearer ${localStorage.getItem("app_token")}`,
 });
@@ -334,7 +333,7 @@ export default function ManageSubscription() {
                     <p className="st-account-meta">Contactanos por WhatsApp</p>
                   </div>
                   <a
-                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hola,%20necesito%20asistencia%20con%20mi%20suscripción%20en%20DigitalPacking`}
+                    href={`https://wa.me/${import.meta.env.WHATSAPP_NUMBER}?text=Hola,%20necesito%20asistencia%20con%20mi%20suscripción%20en%20DigitalPacking`}
                     target="_blank"
                     rel="noreferrer"
                     className="st-add-btn"
