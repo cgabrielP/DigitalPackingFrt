@@ -191,6 +191,40 @@
   animation: login-rotate 0.7s linear infinite;
   flex-shrink: 0;
 }
+/* ── Heading ── */
+.login-heading {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--lg-text);
+  margin-bottom: 20px;
+}
+
+/* ── Switch ── */
+.login-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--lg-text-2);
+}
+
+.login-switch-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--lg-amber);
+  font-weight: 500;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.login-switch-link:hover { opacity: 0.75; }
 
 /* ── Keyframes ── */
 @keyframes login-up {

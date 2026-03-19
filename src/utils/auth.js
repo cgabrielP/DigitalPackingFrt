@@ -8,7 +8,7 @@ export const isTokenValid = () => {
     
     const payload = JSON.parse(atob(token.split('.')[1]))
     const now = Math.floor(Date.now() / 1000)
-    return payload.exp > now // false si expiró
+    return payload.exp > now
   } catch {
     return false
   }
@@ -24,7 +24,7 @@ export const apiFetch = async (url, options = {}) => {
   if (res.status === 403) {
     const data = await res.json();
     if (data.error === "trial_expired") {
-      window.location.href = "/upgrade";
+      window.location.href = "/select-plan";
       return; 
     }
   }
