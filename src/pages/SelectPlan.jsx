@@ -7,7 +7,7 @@ import './SelectPlan.css'
 const PRICE_MONTHLY       = 29990   // CLP / mes (plan mensual)
 const PRICE_ANNUAL_MONTH  = 19990   // CLP / mes (plan anual, cobrado anual)
 const PRICE_ANNUAL_TOTAL  = 239880  // CLP / año
-const WHATSAPP_NUMBER     = '56995759799'
+const WHATSAPP_NUMBER     = process.env.WHATSAPP_NUMBER
 // ─────────────────────────────────────────────────────
 
 const getSession = () => {
