@@ -23,6 +23,7 @@ export default function ScanOrder() {
   const [syncMsg, setSyncMsg] = useState(null);
   const [scannerMode, setScannerMode] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false)
+  const [showInput, setShowInput] = useState(false)
   const [theme, setTheme] = useState(
     () => localStorage.getItem("picking_theme") || "dark"
   );
@@ -172,6 +173,7 @@ export default function ScanOrder() {
         // Acumular en buffer
         scannerBuffer.current += e.key;
         setScannerMode(true);
+        setShowInput(true);
 
         // Mostrar en el input
         setCode(scannerBuffer.current);
@@ -244,93 +246,104 @@ export default function ScanOrder() {
               </span>
             </div>
 
-            <form className="scan-form" onSubmit={handleScan}>
-              <div className="scan-input-wrapper">
-                {/* Icono barras */}
-                <svg
-                  className="scan-input-icon"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <rect x="3" y="7" width="3" height="10" rx="1" />
-                  <rect x="8" y="5" width="2" height="14" rx="1" />
-                  <rect x="12" y="7" width="4" height="10" rx="1" />
-                  <rect x="18" y="5" width="3" height="14" rx="1" />
-                </svg>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  className={`scan-input${scannerMode ? " scan-input--scanning" : ""
-                    }`}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="ID de orden o escanea el código..."
-                  autoComplete="off"
-                  autoCorrect="off"
-                  spellCheck={false}
-                />
-                {code && (
+            {!showInput ? (
+              <div className="scan-toggle-row">
+                <div className="scan-toggle-btn-wrap">
+                  <button
+                    type="button"
+                    className="scan-toggle-btn"
+                    onClick={() => {
+                      setShowInput(true);
+                      setTimeout(() => inputRef.current?.focus(), 50);
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="M21 21l-4.35-4.35" />
+                    </svg>
+                  </button>
+                  <span className="scan-toggle-tooltip">Ingresar número manualmente</span>
+                </div>
+                <div className="scan-camera-btn-wrap">
+                  <button
+                    type="button"
+                    className="scan-camera-btn"
+                    onClick={() => setCameraOpen(true)}
+                  >
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </button>
+                  <span className="scan-toggle-tooltip">Escanear con cámara</span>
+                </div>
+              </div>
+            ) : (
+              <form className="scan-form" onSubmit={handleScan}>
+                <div className="scan-input-wrapper">
+                  <svg
+                    className="scan-input-icon"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                  </svg>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    className={`scan-input${scannerMode ? " scan-input--scanning" : ""}`}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="Número de orden..."
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
                   <button
                     type="button"
                     className="scan-input-clear"
                     onClick={() => {
                       setCode("");
-                      inputRef.current?.focus();
+                      setShowInput(false);
                     }}
                     tabIndex={-1}
-                    aria-label="Limpiar"
+                    aria-label="Cerrar"
                   >
                     ×
                   </button>
-                )}
-
-              </div>
-              <button
-                type="button"
-                className="scan-camera-btn"
-                onClick={() => setCameraOpen(true)}
-                title="Escanear con cámara"
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              </button>
-              <button
-                type="submit"
-                className="scan-submit-btn"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="spinner-sm" />
-                ) : (
-                  <>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
+                </div>
+                <button
+                  type="submit"
+                  className="scan-submit-btn"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="spinner-sm" />
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <circle cx="11" cy="11" r="8" />
                       <path d="M21 21l-4.35-4.35" />
                     </svg>
-                    BUSCAR
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Hint */}
-            <p className="scan-hint">
-              Escribe el ID manualmente o apunta la pistola lectora — captura
-              automática activa
-            </p>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="scan-camera-btn scan-camera-btn--inline"
+                  onClick={() => setCameraOpen(true)}
+                  title="Escanear con cámara"
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </button>
+              </form>
+            )}
           </section>
 
           {/* Error */}
@@ -360,20 +373,26 @@ export default function ScanOrder() {
           {/* Estado vacío */}
           {!order && !error && !loading && (
             <div className="scan-empty">
-              <svg
-                width="52"
-                height="52"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="0.8"
-              >
-                <rect x="3" y="7" width="3" height="10" rx="1" />
-                <rect x="8" y="5" width="2" height="14" rx="1" />
-                <rect x="12" y="7" width="4" height="10" rx="1" />
-                <rect x="18" y="5" width="3" height="14" rx="1" />
-              </svg>
-              <p>ESPERANDO ESCANEO</p>
+              <div className="scan-empty-icon-wrap">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                  <rect x="3" y="7" width="3" height="10" rx="1" />
+                  <rect x="8" y="5" width="2" height="14" rx="1" />
+                  <rect x="12" y="7" width="4" height="10" rx="1" />
+                  <rect x="18" y="5" width="3" height="14" rx="1" />
+                </svg>
+              </div>
+              <p className="scan-empty-title">ESPERANDO ESCANEO</p>
+              <p className="scan-empty-sub">Apunta la pistola lectora o usa los botones de arriba</p>
+            </div>
+          )}
+
+          {/* Buscando */}
+          {!order && !error && loading && (
+            <div className="scan-empty">
+              <div className="scan-empty-icon-wrap">
+                <span className="spinner-lg" />
+              </div>
+              <p className="scan-empty-title">BUSCANDO...</p>
             </div>
           )}
         </main>

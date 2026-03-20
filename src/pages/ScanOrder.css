@@ -11,13 +11,26 @@
   transition: background 0.25s ease, color 0.25s ease;
 }
 
-
+/* Subtle radial glow behind buttons */
+.scan-root::before {
+  content: '';
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
 
 /* ── Main ── */
 .scan-main {
-  max-width: 640px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 48px 24px 80px;
+  padding: 56px 24px 100px;
   position: relative;
   z-index: 1;
 }
@@ -27,13 +40,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .scan-section-label {
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 3px;
+  font-size: 10px;
+  letter-spacing: 4px;
   color: var(--text-muted);
   margin: 0;
 }
@@ -47,7 +60,7 @@
   font-size: 9px;
   letter-spacing: 2px;
   color: var(--text-faint);
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   border: 1px solid var(--border-mid);
   background: var(--bg-surface);
@@ -79,12 +92,112 @@
   to   { opacity: 0.4; transform: scale(0.7); }
 }
 
-/* ── Form ── */
+/* ── Toggle row (collapsed state) ── */
+.scan-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 32px;
+  padding: 32px 0 8px;
+}
+
+/* Shared wrap for both icon buttons */
+.scan-toggle-btn-wrap,
+.scan-camera-btn-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ── Search icon button (amber) ── */
+.scan-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: none;
+  color: #000;
+  cursor: pointer;
+  box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.12), 0 4px 14px rgba(245, 158, 11, 0.3);
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.scan-toggle-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 7px rgba(245, 158, 11, 0.18), 0 6px 20px rgba(245, 158, 11, 0.35);
+}
+
+.scan-toggle-btn:active { transform: scale(0.95); }
+
+/* ── Camera button wrap — hidden on desktop ── */
+.scan-camera-btn-wrap {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .scan-camera-btn-wrap { display: inline-flex; }
+}
+
+/* ── Camera icon button (blue) ── */
+.scan-camera-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.12), 0 4px 14px rgba(59, 130, 246, 0.3);
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+.scan-camera-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 7px rgba(59, 130, 246, 0.18), 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+
+.scan-camera-btn:active { transform: scale(0.95); }
+
+/* Inline variant inside the expanded form — matches input height */
+.scan-camera-btn--inline {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+
+
+/* Shared tooltip label under both icon buttons */
+.scan-toggle-tooltip {
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  color: var(--text-faint);
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 100px;
+  white-space: normal;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* ── Form (expanded state) ── */
 .scan-form-section { margin-bottom: 8px; }
 
 .scan-form {
   display: flex;
   gap: 10px;
+  align-items: center;
 }
 
 .scan-input-wrapper {
@@ -106,10 +219,10 @@
   width: 100%;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 8px;
-  padding: 14px 36px 14px 44px;
+  border-radius: 10px;
+  padding: 14px 40px 14px 44px;
   color: var(--input-color);
-  font-size: 16px;
+  font-size: 15px;
   font-family: 'Space Mono', monospace;
   outline: none;
   transition: border-color 0.2s, background 0.25s, box-shadow 0.2s;
@@ -117,22 +230,22 @@
 
 .scan-input:focus {
   border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.08);
 }
 
 /* Borde amarillo cuando el scanner está leyendo */
 .scan-input--scanning {
   border-color: #f59e0b !important;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
 }
 
-.scan-input--scanning + .scan-input-icon,
 .scan-input-wrapper:has(.scan-input--scanning) .scan-input-icon {
   color: #f59e0b;
 }
 
 .scan-input::placeholder { color: var(--input-placeholder); }
 
-/* Botón × para limpiar el input */
+/* Botón × para cerrar el input */
 .scan-input-clear {
   position: absolute;
   right: 10px;
@@ -151,71 +264,28 @@
 
 .scan-input-clear:hover { color: var(--text-primary); }
 
+/* ── Submit button (icon-only, amber) ── */
 .scan-submit-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
   background: #f59e0b;
   color: #000;
   border: none;
-  border-radius: 8px;
-  padding: 14px 24px;
-  font-family: 'Space Mono', monospace;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 2px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
-  white-space: nowrap;
-  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
-.scan-submit-btn:hover:not(:disabled)  { opacity: 0.9; transform: translateY(-1px); }
-.scan-submit-btn:active:not(:disabled) { transform: scale(0.97); }
-.scan-submit-btn:disabled              { opacity: 0.55; cursor: not-allowed; transform: none; }
+.scan-submit-btn:hover:not(:disabled)  { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4); }
+.scan-submit-btn:active:not(:disabled) { transform: scale(0.95); }
+.scan-submit-btn:disabled              { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
 
-/* ── Hint ── */
-.scan-hint {
-  font-size: 11px;
-  color: var(--text-faint);
-  margin-top: 8px;
-  letter-spacing: 0.3px;
-  font-family: 'DM Sans', sans-serif;
-}
-
-/* ── Error ── */
-.scan-error {
-  background: color-mix(in srgb, #7f1d1d 15%, var(--bg-surface));
-  border: 1px solid #7f1d1d;
-  border-radius: 8px;
-  padding: 14px 18px;
-  color: #f87171;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  animation: scan-fadeUp 0.3s ease;
-}
-
-/* ── Empty state ── */
-.scan-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 80px 0;
-  color: var(--text-faint);
-  opacity: 0.4;
-}
-
-.scan-empty p {
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 3px;
-}
-
-/* ── Spinner ── */
+/* ── Spinners ── */
 .spinner-sm {
   display: inline-block;
   width: 14px;
@@ -226,34 +296,79 @@
   animation: scan-spin 0.7s linear infinite;
   flex-shrink: 0;
 }
-.scan-camera-btn {
-  display: none; /* oculto en desktop */
+
+.spinner-lg {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--border-mid);
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: scan-spin 1.2s linear infinite;
+}
+
+/* ── Error ── */
+.scan-error {
+  background: color-mix(in srgb, #7f1d1d 15%, var(--bg-surface));
+  border: 1px solid rgba(127, 29, 29, 0.6);
+  border-radius: 10px;
+  padding: 14px 18px;
+  color: #f87171;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  animation: scan-fadeUp 0.3s ease;
+}
+
+/* ── Empty state ── */
+.scan-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 72px 0 60px;
+  text-align: center;
+}
+
+.scan-empty-icon-wrap {
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 8px;
-  padding: 14px 16px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid var(--border-mid);
+  background: var(--bg-surface);
+  color: var(--text-faint);
+  opacity: 0.5;
+  margin-bottom: 4px;
+}
+
+.scan-empty-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
   color: var(--text-muted);
-  cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
-  flex-shrink: 0;
+  margin: 0;
+  opacity: 0.7;
 }
 
-.scan-camera-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--text-muted);
+.scan-empty-sub {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin: 0;
+  opacity: 0.5;
+  max-width: 260px;
+  line-height: 1.5;
 }
 
-@media (max-width: 768px) {
-  .scan-camera-btn {
-    display: flex;
-  }
-}
-
-@keyframes scan-spin    { to { transform: rotate(360deg); } }
-@keyframes scan-fadeUp  {
-  from { opacity: 0; transform: translateY(12px); }
+/* ── Animations ── */
+@keyframes scan-spin   { to { transform: rotate(360deg); } }
+@keyframes scan-pulse  { from { opacity: 1; transform: scale(1); } to { opacity: 0.4; transform: scale(0.7); } }
+@keyframes scan-fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -261,7 +376,7 @@
    RESPONSIVE — TABLET (< 1024px)
 ════════════════════════════════ */
 @media (max-width: 1023px) {
-  .scan-main { padding: 36px 20px 60px; }
+  .scan-main { padding: 40px 20px 60px; }
 }
 
 /* ════════════════════════════════
@@ -270,18 +385,16 @@
 @media (max-width: 640px) {
   .scan-main { padding: 28px 16px 60px; }
 
-  .scan-form {
-    flex-wrap: wrap;
-  }
+  .scan-toggle-row { gap: 24px; }
 
-  .scan-input-wrapper {
-    flex-basis: 100%;
-  }
+  .scan-form { flex-wrap: wrap; }
 
-  .scan-submit-btn {
+  .scan-input-wrapper { flex-basis: 100%; }
+
+  .scan-camera-btn--inline {
     flex: 1;
-    justify-content: center;
+    border-radius: 10px;
+    height: 48px;
+    width: auto;
   }
-
-  .scan-hint { text-align: center; }
 }

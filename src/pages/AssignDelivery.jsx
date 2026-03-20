@@ -65,6 +65,7 @@ export default function AssignDelivery() {
   const [scanLoading, setScanLoading] = useState(false);
   const [scannerMode, setScannerMode] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [showInput, setShowInput] = useState(false);
 
   // ── Asignación bulk ──
   const [selectedUser, setSelectedUser] = useState("");
@@ -152,6 +153,7 @@ export default function AssignDelivery() {
       if (e.key.length === 1) {
         scannerBuffer.current += e.key;
         setScannerMode(true);
+        setShowInput(true);
         setCode(scannerBuffer.current);
         clearTimeout(scannerTimer.current);
         scannerTimer.current = setTimeout(() => {
@@ -408,6 +410,10 @@ export default function AssignDelivery() {
     setPendingOrders([]);
     setSelectedUser("");
     setBulkAssigning(false);
+    setShowInput(false);
+    setScanWarning(null);
+    setScanError(null);
+    setCode("");
 
     if (errors.length === 0) {
       showToast(
@@ -1109,107 +1115,114 @@ export default function AssignDelivery() {
                     </p>
                     <span
                       className={`adl-scan-indicator ${
-                        scannerMode ? "adl-scan-indicator--active" : ""
+                        scannerMode ? "adl-scan-indicator--active" :
+                        showInput   ? "adl-scan-indicator--manual"  : ""
                       }`}
                     >
                       <span className="adl-scan-dot" />
-                      {scannerMode ? "LEYENDO..." : "LISTO"}
+                      {scannerMode ? "LEYENDO..." : showInput ? "MANUAL" : "EN ESPERA"}
                     </span>
                   </div>
-                  <form className="adl-scan-form" onSubmit={handleScan}>
-                    <div className="adl-scan-input-wrapper">
-                      <svg
-                        className="adl-scan-icon"
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect x="3" y="7" width="3" height="10" rx="1" />
-                        <rect x="8" y="5" width="2" height="14" rx="1" />
-                        <rect x="12" y="7" width="4" height="10" rx="1" />
-                        <rect x="18" y="5" width="3" height="14" rx="1" />
-                      </svg>
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        className={`adl-scan-input ${
-                          scannerMode ? "adl-scan-input--scanning" : ""
-                        }`}
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        placeholder={
-                          selectedUser
-                            ? "ID de orden o escanea el código..."
-                            : "Primero elige un delivery..."
-                        }
-                        disabled={!selectedUser}
-                        autoComplete="off"
-                        autoCorrect="off"
-                        spellCheck={false}
-                      />
-                      {code && (
+                  {!showInput ? (
+                    <div className="adl-toggle-row">
+                      <div className="adl-toggle-btn-wrap">
+                        <button
+                          type="button"
+                          className="adl-toggle-btn"
+                          disabled={!selectedUser}
+                          onClick={() => {
+                            setShowInput(true);
+                            setTimeout(() => inputRef.current?.focus(), 50);
+                          }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="M21 21l-4.35-4.35" />
+                          </svg>
+                        </button>
+                        <span className="adl-toggle-tooltip">Ingresar número manualmente</span>
+                      </div>
+                      <div className="adl-camera-btn-wrap">
+                        <button
+                          type="button"
+                          className="adl-btn-camera"
+                          disabled={!selectedUser}
+                          onClick={() => setCameraOpen(true)}
+                        >
+                          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                        </button>
+                        <span className="adl-toggle-tooltip">Escanear con cámara</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <form className="adl-scan-form" onSubmit={handleScan}>
+                      <div className="adl-scan-input-wrapper">
+                        <svg
+                          className="adl-scan-icon"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          className={`adl-scan-input ${scannerMode ? "adl-scan-input--scanning" : ""}`}
+                          value={code}
+                          onChange={(e) => setCode(e.target.value)}
+                          placeholder={selectedUser ? "Número de orden..." : "Primero elige un delivery..."}
+                          disabled={!selectedUser}
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                        />
                         <button
                           type="button"
                           className="adl-scan-clear"
                           onClick={() => {
                             setCode("");
-                            inputRef.current?.focus();
+                            setShowInput(false);
                           }}
                         >
                           ×
                         </button>
-                      )}
-                    </div>
-                    <button
-                      type="submit"
-                      className="adl-btn-primary"
-                      disabled={scanLoading || !selectedUser}
-                    >
-                      {scanLoading ? (
-                        <span className="adl-spin" />
-                      ) : (
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="M21 21l-4.35-4.35" />
-                        </svg>
-                      )}
-                    </button>
-
-                    {/* Botón de cámara — solo en mobile */}
-                    <button
-                      type="button"
-                      className="adl-btn-camera"
-                      onClick={() => setCameraOpen(true)}
-                      disabled={!selectedUser}
-                      title="Escanear con cámara"
-                    >
-                      <svg
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                      </div>
+                      <button
+                        type="submit"
+                        className="adl-btn-primary"
+                        disabled={scanLoading || !selectedUser}
                       >
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                        <circle cx="12" cy="13" r="4" />
-                      </svg>
-                    </button>
-                  </form>
-                  <p className="adl-scan-hint">
-                    Ingresá el ID, escaneá con la pistola, o usá la cámara del
-                    celular
-                  </p>
+                        {scanLoading ? (
+                          <span className="adl-spin" />
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="M21 21l-4.35-4.35" />
+                          </svg>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="adl-btn-camera adl-btn-camera--inline"
+                        onClick={() => setCameraOpen(true)}
+                        disabled={!selectedUser}
+                        title="Escanear con cámara"
+                      >
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                          <circle cx="12" cy="13" r="4" />
+                        </svg>
+                      </button>
+                    </form>
+                  )}
                 </div>
 
                 {scanWarning && (
@@ -1306,10 +1319,7 @@ export default function AssignDelivery() {
               {pendingOrders.length > 0 && (
                 <div className="adl-bulk-step">
                   <p className="adl-label">③ CONFIRMAR ASIGNACIÓN</p>
-                  <div
-                    className="adl-found-footer"
-                    style={{ justifyContent: "flex-start", marginBottom: 0 }}
-                  >
+                  <div className="adl-confirm-row">
                     <button
                       className="adl-btn-ghost"
                       onClick={() => {
@@ -1322,16 +1332,14 @@ export default function AssignDelivery() {
                       Limpiar lista
                     </button>
                     <button
-                      className="adl-btn-primary"
+                      className="adl-btn-confirm"
                       onClick={handleBulkAssign}
                       disabled={bulkAssigning}
                     >
                       {bulkAssigning && <span className="adl-spin" />}
                       {bulkAssigning
                         ? "ASIGNANDO..."
-                        : `CONFIRMAR ${pendingOrders.length} ORDEN${
-                            pendingOrders.length !== 1 ? "ES" : ""
-                          }`}
+                        : `CONFIRMAR ${pendingOrders.length} ORDEN${pendingOrders.length !== 1 ? "ES" : ""}`}
                     </button>
                   </div>
                 </div>
