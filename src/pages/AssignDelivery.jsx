@@ -469,6 +469,30 @@ export default function AssignDelivery() {
     }
   };
 
+  /* ── Eliminar orden manual del backend si no fue asignada ── */
+  const deleteManualOrder = async (orderId) => {
+    if (!orderId.startsWith("MANUAL-")) return;
+    try {
+      await apiFetch(`${API_URL}/delivery/manual-order/${orderId}`, {
+        method: "DELETE",
+        headers: getHeaders(),
+      });
+    } catch { /* silencioso — la orden puede ya estar asignada */ }
+  };
+
+  const removeFromPending = (orderId) => {
+    deleteManualOrder(orderId);
+    setPendingOrders((prev) => prev.filter((x) => x.id !== orderId));
+  };
+
+  const clearPendingOrders = () => {
+    pendingOrders.forEach((o) => deleteManualOrder(o.id));
+    setPendingOrders([]);
+    setScanError(null);
+    setScanWarning(null);
+    setBulkDone(null);
+  };
+
   /* ── Orden manual creada → agregar a pendingOrders ── */
   const handleManualCreated = (order) => {
     setPendingOrders((prev) => {
@@ -1316,11 +1340,7 @@ export default function AssignDelivery() {
                         </div>
                         <button
                           className="adl-pending-remove"
-                          onClick={() =>
-                            setPendingOrders((prev) =>
-                              prev.filter((x) => x.id !== o.id)
-                            )
-                          }
+                          onClick={() => removeFromPending(o.id)}
                         >
                           ×
                         </button>
@@ -1356,12 +1376,7 @@ export default function AssignDelivery() {
                   <div className="adl-confirm-row">
                     <button
                       className="adl-btn-ghost"
-                      onClick={() => {
-                        setPendingOrders([]);
-                        setScanError(null);
-                        setScanWarning(null);
-                        setBulkDone(null);
-                      }}
+                      onClick={clearPendingOrders}
                     >
                       Limpiar lista
                     </button>
