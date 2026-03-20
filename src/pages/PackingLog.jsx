@@ -23,6 +23,7 @@ export default function PackingLog() {
   const [loading, setLoading]     = useState(true)
   const [userFilter, setUserFilter] = useState('all')
   const [showScans, setShowScans] = useState(false)
+  const [orderSearch, setOrderSearch] = useState('')
   const [date, setDate]           = useState(todayISO())
   const [theme, setTheme]         = useState(
     () => localStorage.getItem('picking_theme') || 'light'
@@ -64,10 +65,17 @@ export default function PackingLog() {
     return Array.from(map.values())
   }, [logs])
 
-  const filtered = useMemo(() =>
-    logs.filter(l => showScans ? true : l.action === 'packed'),
-    [logs, showScans]
-  )
+  const filtered = useMemo(() => {
+    const term = orderSearch.trim().toLowerCase()
+    return logs.filter(l => {
+      if (!showScans && l.action !== 'packed') return false
+      if (term) {
+        const id = String(l.order.packId ?? l.order.id ?? '').toLowerCase()
+        if (!id.includes(term)) return false
+      }
+      return true
+    })
+  }, [logs, showScans, orderSearch])
 
   const stats = useMemo(() => {
     const packed  = logs.filter(l => l.action === 'packed').length
@@ -129,6 +137,13 @@ export default function PackingLog() {
             <p className="pl-date-label">{formatDateLabel(date)}</p>
 
             <div className="pl-filters">
+              <input
+                className="pl-search"
+                type="text"
+                placeholder="BUSCAR ORDEN..."
+                value={orderSearch}
+                onChange={e => setOrderSearch(e.target.value)}
+              />
               <select className="pl-select" value={userFilter} onChange={e => setUserFilter(e.target.value)}>
                 <option value="all">TODOS LOS OPERADORES</option>
                 {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
