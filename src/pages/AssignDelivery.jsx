@@ -6,6 +6,7 @@ import DeliveryAssignmentRow from "../components/DeliveryAssignmentRow";
 import CameraScanner from "../components/CameraScanner";
 import "./AssignDelivery.css";
 import ReportModal from "../components/ReportModal";
+import ManualOrderModal from "../components/ManualOrderModal";
 import { generateDeliveryReport } from "../utils/reports.js";
 import { apiFetch } from "../utils/auth.js";
 
@@ -57,6 +58,7 @@ export default function AssignDelivery() {
     () => localStorage.getItem("picking_theme") || "light"
   );
   const [reportModal, setReportModal] = useState(false);
+  const [manualModal, setManualModal] = useState(false);
 
   // ── Scanner / búsqueda ──
   const [code, setCode] = useState("");
@@ -465,6 +467,24 @@ export default function AssignDelivery() {
     } else {
       showToast("success", `Reporte generado · ${result.count} asignaciones`);
     }
+  };
+
+  /* ── Orden manual creada → agregar a pendingOrders ── */
+  const handleManualCreated = (order) => {
+    setPendingOrders((prev) => {
+      if (prev.some((o) => o.id === order.id)) return prev;
+      return [
+        ...prev,
+        {
+          ...order,
+          displayIdentifier: order.id,
+          packedOrders: [order.id],
+          orderItems: [],
+        },
+      ];
+    });
+    setManualModal(false);
+    showToast("success", `Orden manual #${order.id} creada`);
   };
 
   /* ════════════════════════════════════════
@@ -1107,7 +1127,21 @@ export default function AssignDelivery() {
                   !selectedUser ? " adl-bulk-step--disabled" : ""
                 }`}
               >
-                <p className="adl-label">② ESCANEAR PAQUETES</p>
+                <div className="adl-step-header">
+                  <p className="adl-label">ESCANEAR PAQUETES</p>
+                  <button
+                    type="button"
+                    className="adl-btn-manual"
+                    disabled={!selectedUser}
+                    onClick={() => setManualModal(true)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    ORDEN MANUAL
+                  </button>
+                </div>
                 <div className="adl-scan-form-wrapper">
                   <div className="adl-scan-header">
                     <p className="adl-scan-label">
@@ -1417,6 +1451,12 @@ export default function AssignDelivery() {
         <ReportModal
           onClose={() => setReportModal(false)}
           onGenerate={handleGenerateReport}
+        />
+      )}
+      {manualModal && (
+        <ManualOrderModal
+          onClose={() => setManualModal(false)}
+          onCreated={handleManualCreated}
         />
       )}
     </div>
