@@ -173,7 +173,6 @@ export default function ScanOrder() {
         // Acumular en buffer
         scannerBuffer.current += e.key;
         setScannerMode(true);
-        setShowInput(true);
 
         // Mostrar en el input
         setCode(scannerBuffer.current);

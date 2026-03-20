@@ -155,7 +155,6 @@ export default function AssignDelivery() {
       if (e.key.length === 1) {
         scannerBuffer.current += e.key;
         setScannerMode(true);
-        setShowInput(true);
         setCode(scannerBuffer.current);
         clearTimeout(scannerTimer.current);
         scannerTimer.current = setTimeout(() => {
@@ -1173,12 +1172,16 @@ export default function AssignDelivery() {
                     </p>
                     <span
                       className={`adl-scan-indicator ${
-                        scannerMode ? "adl-scan-indicator--active" :
+                        scanLoading ? "adl-scan-indicator--loading" :
+                        scannerMode ? "adl-scan-indicator--active"  :
                         showInput   ? "adl-scan-indicator--manual"  : ""
                       }`}
                     >
-                      <span className="adl-scan-dot" />
-                      {scannerMode ? "LEYENDO..." : showInput ? "MANUAL" : "EN ESPERA"}
+                      {scanLoading
+                        ? <span className="adl-scan-spinner" />
+                        : <span className="adl-scan-dot" />
+                      }
+                      {scanLoading ? "BUSCANDO..." : scannerMode ? "LEYENDO..." : showInput ? "MANUAL" : "EN ESPERA"}
                     </span>
                   </div>
                   {!showInput ? (
