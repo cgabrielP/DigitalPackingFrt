@@ -8,19 +8,20 @@ const openLabel = (order) => {
   const id = order.displayIdentifier ?? order.id;
   window.open(`${API_URL}/orders/${id}/label?token=${token}`, "_blank");
 };
-const STATUS_ML = {
+
+export const STATUS_ML = {
   paid: { label: "PAGADO", cls: "paid" },
   confirmed: { label: "CONFIRMADO", cls: "confirmed" },
   cancelled: { label: "CANCELADO", cls: "cancelled" },
 };
 
-const STATUS_PICKING = {
+export const STATUS_PICKING = {
   pending: { label: "PENDIENTE", cls: "pending" },
   scanned: { label: "ESCANEADO", cls: "scanned" },
   packed: { label: "EMPACADO", cls: "packed" },
 };
 
-const SHIPPING_CATEGORY = {
+export const SHIPPING_CATEGORY = {
   por_despachar: { label: "POR DESPACHAR", cls: "ship-pending" },
   en_transito: { label: "EN TRÁNSITO", cls: "ship-transit" },
   finalizados: { label: "FINALIZADO", cls: "ship-done" },
@@ -49,7 +50,7 @@ const resolveNoPromiseReason = (order) => {
   return NO_PROMISE_REASONS.default;
 };
 
-const formatDate = (dateStr) => {
+export const formatDate = (dateStr) => {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("es-CL", {
     day: "2-digit",
@@ -110,7 +111,7 @@ export const UrgencyBadge = ({ order }) => {
 };
 
 // ── Row ───────────────────────────────────────────────────────────────────────
-const OrderRow = ({ order, index, showUrgency = false }) => {
+const OrderRow = ({ order, index, showUrgency = false, onZoomItems }) => {
   const mlStatus = STATUS_ML[order.status] || {
     label: order.status?.toUpperCase() || "—",
     cls: "other",
@@ -127,15 +128,24 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
 
   return (
     <tr className="order-row" style={{ animationDelay: `${index * 40}ms` }}>
-      <td className="td-id">#{order.displayIdentifier}</td>
+      <td
+        className="td-id"
+        title={`Click para copiar: ${order.displayIdentifier}`}
+        onClick={() => navigator.clipboard?.writeText(String(order.displayIdentifier))}
+      >
+        <span className="td-id__full">#{order.displayIdentifier}</span>
+      </td>
 
       <td className="td-amount">
         ${order.totalAmount?.toLocaleString("es-CL")}
       </td>
 
-      {/* Items thumbnails */}
+      {/* Items thumbnails — click to zoom */}
       <td>
-        <div className="td-items">
+        <div
+          className="td-items td-items--zoomable"
+          onClick={() => onZoomItems?.(order.orderItems)}
+        >
           {order.orderItems?.slice(0, 3).map((item) =>
             item.thumbnail ? (
               <img
@@ -163,11 +173,14 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
               +{order.orderItems.length - 3}
             </div>
           )}
+          <svg className="td-items__zoom" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+          </svg>
         </div>
       </td>
 
-      {/* Estado ML */}
-      <td>
+      {/* Estado ML — hidden on tablet */}
+      <td className="td-collapsible">
         <span className={`status-badge ${mlStatus.cls}`}>
           <span className="badge-dot" />
           {mlStatus.label}
@@ -201,7 +214,7 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
         </span>
       </td>
 
-      <td className="td-date">{formatDate(order.lastUpdatedAt)}</td>
+      <td className="td-date td-collapsible">{formatDate(order.lastUpdatedAt)}</td>
       <td>
         {canPrintLabel && (
           <button
@@ -209,13 +222,12 @@ const OrderRow = ({ order, index, showUrgency = false }) => {
             onClick={() => openLabel(order)}
             title="Imprimir etiqueta"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2.2">
               <path d="M6 9V2h12v7" />
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
               <rect x="6" y="14" width="12" height="8" />
             </svg>
-            ETIQUETA
           </button>
         )}
       </td>

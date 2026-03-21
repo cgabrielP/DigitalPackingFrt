@@ -22,11 +22,11 @@
 
 .orders-table thead th {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 2px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
   color: var(--text-faint);
   text-align: left;
-  padding: 14px 20px;
+  padding: 12px 14px;
   white-space: nowrap;
   background: var(--bg-elevated);
 }
@@ -40,7 +40,7 @@
 .orders-table tbody tr:hover      { background: var(--bg-elevated); }
 
 .orders-table tbody td {
-  padding: 13px 20px;
+  padding: 11px 14px;
   font-size: 13px;
   color: var(--text-primary);
 }
@@ -205,20 +205,20 @@
 .picking-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
+  gap: 4px;
+  padding: 3px 7px;
   border-radius: 4px;
   font-family: 'Space Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 1px;
+  font-size: 8px;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
   white-space: nowrap;
   border: 1px solid transparent;
 }
 
 .badge-dot {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   flex-shrink: 0;
   background: currentColor;
@@ -246,30 +246,32 @@
 .td-items {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .item-thumb {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
   object-fit: cover;
   border: 1px solid var(--border);
   background: var(--bg-elevated);
+  flex-shrink: 0;
 }
 
 .item-thumb-placeholder {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 4px;
   border: 1px solid var(--border);
   background: var(--bg-elevated);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-faint);
   font-family: 'Space Mono', monospace;
+  flex-shrink: 0;
 }
 
 /* ════════════════════════════════════════
@@ -295,8 +297,9 @@
 .label-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 5px 10px;
+  padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid var(--border-mid);
   background: transparent;
@@ -331,4 +334,202 @@
 /* Contenedor mobile con padding */
 .ocard__label-action {
   padding: 10px 14px 14px;
+}
+
+/* ════════════════════════════════════════
+   COLLAPSIBLE COLUMNS (tablet < 1024px)
+════════════════════════════════════════ */
+@media (max-width: 1023px) {
+  .th-collapsible,
+  .td-collapsible {
+    display: none;
+  }
+}
+
+/* ════════════════════════════════════════
+   ZOOMABLE THUMBNAILS
+════════════════════════════════════════ */
+.td-items--zoomable,
+.ocard__thumbs--zoomable {
+  cursor: pointer;
+  position: relative;
+}
+
+.td-items__zoom,
+.ocard__zoom-icon {
+  color: var(--text-faint);
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.td-items--zoomable:hover .td-items__zoom,
+.ocard__thumbs--zoomable:hover .ocard__zoom-icon {
+  opacity: 1;
+}
+
+.td-items--zoomable:hover .item-thumb,
+.ocard__thumbs--zoomable:hover .item-thumb {
+  border-color: var(--border-hover);
+  transform: scale(1.08);
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+/* ════════════════════════════════════════
+   PRODUCT LIGHTBOX
+════════════════════════════════════════ */
+.plb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: plbFadeIn 0.18s ease;
+}
+
+@keyframes plbFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.plb-content {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  animation: plbSlideUp 0.22s ease;
+}
+
+@keyframes plbSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.plb-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  margin: 10px 10px 0 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  z-index: 1;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.plb-close:hover {
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+.plb-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 0;
+}
+
+.plb-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+
+.plb-item:last-child { border-bottom: none; }
+.plb-item:hover { background: var(--bg-elevated); }
+
+.plb-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.plb-img-placeholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: 'Space Mono', monospace;
+  flex-shrink: 0;
+}
+
+.plb-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.plb-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.plb-qty {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.plb-sku {
+  color: var(--text-faint);
+}
+
+/* Lightbox mobile */
+@media (max-width: 479px) {
+  .plb-content {
+    max-height: 90vh;
+    border-radius: 12px;
+  }
+
+  .plb-img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .plb-img-placeholder {
+    width: 56px;
+    height: 56px;
+  }
+
+  .plb-item {
+    gap: 10px;
+    padding: 10px 14px;
+  }
 }

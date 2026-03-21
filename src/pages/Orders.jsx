@@ -30,11 +30,11 @@ const SHIPPING_FILTERS = [
 // "all" = sin filtro de envío ni urgencia
 // los demás activan por_despachar + esa urgencia
 const URGENCY_TABS = [
-  { key: "all",      label: "TODAS",         color: null,      activeClass: "utab-all"      },
-  { key: "overdue",  label: "ATRASADAS",     color: "#ef4444", activeClass: "utab-overdue"  },
   { key: "today",    label: "HOY",           color: "#f97316", activeClass: "utab-today"    },
   { key: "upcoming", label: "PRÓXIMOS DÍAS", color: "#8b5cf6", activeClass: "utab-upcoming" },
   { key: "none",     label: "SIN PROMESA",   color: "#6b7280", activeClass: "utab-none"     },
+  { key: "overdue",  label: "ATRASADAS",     color: "#ef4444", activeClass: "utab-overdue"  },
+  { key: "all",      label: "TODAS",         color: null,      activeClass: "utab-all"      },
 ];
 
 const URGENCY_ORDER = { overdue: 0, today: 1, upcoming: 2, none: 3 };
@@ -148,8 +148,8 @@ export default function Orders() {
   const [loading, setLoading]               = useState(false);
   const [syncing, setSyncing]               = useState(false);
   const [statusFilter, setStatusFilter]     = useState("all");
-  const [shippingFilter, setShippingFilter] = useState("all");
-  const [urgencyTab, setUrgencyTab]         = useState("all"); // tab activo
+  const [shippingFilter, setShippingFilter] = useState("por_despachar");
+  const [urgencyTab, setUrgencyTab]         = useState("today"); // tab activo
   const [cityFilter, setCityFilter]         = useState("all");
   const [search, setSearch]                 = useState("");
   const [toast, setToast]                   = useState(null);
@@ -364,9 +364,8 @@ export default function Orders() {
   }, [startDate, endDate]);
 
   const hasActiveFilters =
-    statusFilter !== "all" || shippingFilter !== "all" ||
-    urgencyTab !== "all" || cityFilter !== "all" ||
-    search || startDate || endDate;
+    statusFilter !== "all" || urgencyTab !== "all" ||
+    cityFilter !== "all" || search || startDate || endDate;
 
   const clearAll = () => {
     setStatusFilter("all");
@@ -422,34 +421,45 @@ export default function Orders() {
           </div>
 
           {/* ══════════════════════════════════════
-              STATS — contextuales al tab activo
+              STATS — clickable como filtro de estado
           ══════════════════════════════════════ */}
           <div className="orders-stats">
-            <div className="orders-stat-card">
+            <button
+              className="orders-stat-card"
+              onClick={() => setStatusFilter("all")}
+            >
               <span className="orders-stat-label">
                 {urgencyTab !== "all" ? activeTab?.label : "TOTAL"}
               </span>
               <span className="orders-stat-value">{stats.total}</span>
-            </div>
-            <div className="orders-stat-card">
+            </button>
+            <button
+              className={`orders-stat-card ${statusFilter === "pending" ? "stat-active stat-active-yellow" : ""}`}
+              onClick={() => setStatusFilter(statusFilter === "pending" ? "all" : "pending")}
+            >
               <span className="orders-stat-label">PENDIENTES</span>
               <span className="orders-stat-value yellow">{stats.pending}</span>
-            </div>
-            <div className="orders-stat-card">
+            </button>
+            <button
+              className={`orders-stat-card ${statusFilter === "scanned" ? "stat-active stat-active-blue" : ""}`}
+              onClick={() => setStatusFilter(statusFilter === "scanned" ? "all" : "scanned")}
+            >
               <span className="orders-stat-label">ESCANEADAS</span>
               <span className="orders-stat-value blue">{stats.scanned}</span>
-            </div>
-            <div className="orders-stat-card">
+            </button>
+            <button
+              className={`orders-stat-card ${statusFilter === "packed" ? "stat-active stat-active-green" : ""}`}
+              onClick={() => setStatusFilter(statusFilter === "packed" ? "all" : "packed")}
+            >
               <span className="orders-stat-label">EMPACADAS</span>
               <span className="orders-stat-value green">{stats.packed}</span>
-            </div>
+            </button>
           </div>
 
           {/* ══════════════════════════════════════
-              TOOLBAR
+              TOOLBAR — búsqueda + comuna + fecha
           ══════════════════════════════════════ */}
           <div className="orders-toolbar">
-
             <div className="orders-search-wrapper">
               <svg className="orders-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
@@ -462,82 +472,40 @@ export default function Orders() {
               {search && <button className="orders-search-clear" onClick={() => setSearch("")}>×</button>}
             </div>
 
-            {/* ENVÍO */}
-            <div className="orders-filter-group">
-              <span className="filter-group-label">ENVÍO</span>
-              <div className="orders-filters-scroll">
-                {SHIPPING_FILTERS.map((f) => (
-                  <button key={f.key}
-                    className={`orders-filter-btn shipping ${shippingFilter === f.key ? "active-shipping" : ""}`}
-                    onClick={() => handleShippingFilter(f.key)}
-                  >
-                    {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
-                    {f.label}
-                    <span className="filter-count">({shippingCounts[f.key] ?? 0})</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* ESTADO */}
-            <div className="orders-filter-group">
-              <span className="filter-group-label">ESTADO</span>
-              <div className="orders-filters-scroll">
-                {STATUS_FILTERS.map((f) => (
-                  <button key={f.key}
-                    className={`orders-filter-btn ${statusFilter === f.key ? `active-${f.key}` : ""}`}
-                    onClick={() => setStatusFilter(f.key)}
-                  >
-                    {f.color && <span className="filter-dot" style={{ background: f.color }}/>}
-                    {f.label}
-                    {f.key !== "all" && <span className="filter-count">({stats[f.key]})</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* COMUNA + FECHA */}
-            <div className="orders-filters-bottom">
+            <div className="orders-filters-inline">
               {cityOptions.length > 1 && (
-                <div className="orders-filter-group">
-                  <span className="filter-group-label">COMUNA</span>
-                  <CityDropdown value={cityFilter} options={cityOptions} onChange={setCityFilter}/>
-                </div>
+                <CityDropdown value={cityFilter} options={cityOptions} onChange={setCityFilter}/>
               )}
 
-              <div className="orders-filter-group">
-                <span className="filter-group-label">FECHA</span>
-                <div className="orders-date-wrapper">
-                  <button ref={btnRef}
-                    className={`orders-filter-btn ${startDate || endDate ? "active-date" : ""}`}
-                    onClick={() => setCalendarOpen((v) => !v)}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-                    </svg>
-                    {dateLabel}
-                    {(startDate || endDate) && (
-                      <span className="date-clear-x" onClick={(e) => { e.stopPropagation(); setDateRange([null, null]); }}>×</span>
-                    )}
-                  </button>
-                  {calendarOpen && (
-                    <div ref={calendarRef} className="orders-calendar-popup">
-                      <DatePicker
-                        selected={startDate}
-                        onChange={(update) => { setDateRange(update); if (update[0] && update[1]) setCalendarOpen(false); }}
-                        startDate={startDate} endDate={endDate}
-                        selectsRange inline maxDate={new Date()}
-                      />
-                      <div className="cal-footer">
-                        <button className="cal-btn-clear" onClick={() => { setDateRange([null, null]); setCalendarOpen(false); }}>Limpiar</button>
-                        <button className="cal-btn-close" onClick={() => setCalendarOpen(false)}>Cerrar</button>
-                      </div>
-                    </div>
+              <div className="orders-date-wrapper">
+                <button ref={btnRef}
+                  className={`orders-filter-btn ${startDate || endDate ? "active-date" : ""}`}
+                  onClick={() => setCalendarOpen((v) => !v)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+                  </svg>
+                  {dateLabel}
+                  {(startDate || endDate) && (
+                    <span className="date-clear-x" onClick={(e) => { e.stopPropagation(); setDateRange([null, null]); }}>×</span>
                   )}
-                </div>
+                </button>
+                {calendarOpen && (
+                  <div ref={calendarRef} className="orders-calendar-popup">
+                    <DatePicker
+                      selected={startDate}
+                      onChange={(update) => { setDateRange(update); if (update[0] && update[1]) setCalendarOpen(false); }}
+                      startDate={startDate} endDate={endDate}
+                      selectsRange inline maxDate={new Date()}
+                    />
+                    <div className="cal-footer">
+                      <button className="cal-btn-clear" onClick={() => { setDateRange([null, null]); setCalendarOpen(false); }}>Limpiar</button>
+                      <button className="cal-btn-close" onClick={() => setCalendarOpen(false)}>Cerrar</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-
           </div>
 
           {hasActiveFilters && (
@@ -546,6 +514,11 @@ export default function Orders() {
                 {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
                 {urgencyTab !== "all" && (
                   <span style={{ color: activeTab?.color, marginLeft: 6 }}>· {activeTab?.label}</span>
+                )}
+                {statusFilter !== "all" && (
+                  <span style={{ color: statusFilter === "pending" ? "#f59e0b" : statusFilter === "scanned" ? "#3b82f6" : "#16a34a", marginLeft: 6 }}>
+                    · {STATUS_FILTERS.find((f) => f.key === statusFilter)?.label}
+                  </span>
                 )}
                 {cityFilter !== "all" && (
                   <span style={{ color: "#06b6d4", marginLeft: 6 }}>· {cityFilter}</span>

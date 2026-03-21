@@ -1,37 +1,64 @@
-import { useState } from "react";
-import OrderRow from "./OrderRow";
-import { UrgencyBadge } from "./OrderRow";
+import { useState, useEffect, useCallback } from "react";
+import OrderRow, {
+  UrgencyBadge,
+  STATUS_ML,
+  STATUS_PICKING,
+  SHIPPING_CATEGORY,
+  formatDate,
+} from "./OrderRow";
 import "./OrderTable.css";
 
-const STATUS_ML = {
-  paid: { label: "PAGADO", cls: "paid" },
-  confirmed: { label: "CONFIRMADO", cls: "confirmed" },
-  cancelled: { label: "CANCELADO", cls: "cancelled" },
-};
+// ─── Product zoom lightbox ──────────────────────────────────────────────────
+const ProductLightbox = ({ items, onClose }) => {
+  const handleKey = useCallback((e) => {
+    if (e.key === "Escape") onClose();
+  }, [onClose]);
 
-const STATUS_PICKING = {
-  pending: { label: "PENDIENTE", cls: "pending" },
-  scanned: { label: "ESCANEADO", cls: "scanned" },
-  packed: { label: "EMPACADO", cls: "packed" },
-};
+  useEffect(() => {
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [handleKey]);
 
-const SHIPPING_CATEGORY = {
-  por_despachar: { label: "POR DESPACHAR", cls: "ship-pending" },
-  en_transito: { label: "EN TRÁNSITO", cls: "ship-transit" },
-  finalizados: { label: "FINALIZADO", cls: "ship-done" },
-};
+  if (!items || items.length === 0) return null;
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("es-CL", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  return (
+    <div className="plb-overlay" onClick={onClose}>
+      <div className="plb-content" onClick={(e) => e.stopPropagation()}>
+        <button className="plb-close" onClick={onClose}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+        <div className="plb-grid">
+          {items.map((item) => (
+            <div key={item.id} className="plb-item">
+              {item.thumbnail ? (
+                <img
+                  src={item.thumbnail}
+                  alt={item.title}
+                  className="plb-img"
+                  onError={(e) => { e.target.style.display = "none"; }}
+                />
+              ) : (
+                <div className="plb-img-placeholder">Sin imagen</div>
+              )}
+              <div className="plb-info">
+                <span className="plb-title">{item.title || "Sin título"}</span>
+                <span className="plb-qty">
+                  Cant: {item.quantity ?? 1}
+                  {item.sku && <span className="plb-sku"> · SKU {item.sku}</span>}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // ─── Mobile accordion card ───────────────────────────────────────────────────
-const OrderCard = ({ order, index, showUrgency = false }) => {
+const OrderCard = ({ order, index, showUrgency = false, onZoomItems }) => {
   const [open, setOpen] = useState(false);
   const canPrintLabel =
     order.shippingId &&
@@ -90,9 +117,12 @@ const OrderCard = ({ order, index, showUrgency = false }) => {
       {/* ── Expandable detail panel ────────────────────────────────────── */}
       <div className="ocard__body">
         <div className="ocard__body-inner">
-          {/* Thumbnails */}
+          {/* Thumbnails — click to zoom */}
           {order.orderItems?.length > 0 && (
-            <div className="ocard__thumbs">
+            <div
+              className="ocard__thumbs ocard__thumbs--zoomable"
+              onClick={() => onZoomItems?.(order.orderItems)}
+            >
               {order.orderItems.slice(0, 4).map((item) =>
                 item.thumbnail ? (
                   <img
@@ -120,6 +150,9 @@ const OrderCard = ({ order, index, showUrgency = false }) => {
                   +{order.orderItems.length - 4}
                 </div>
               )}
+              <svg className="ocard__zoom-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+              </svg>
             </div>
           )}
 
@@ -231,6 +264,8 @@ const OrderCard = ({ order, index, showUrgency = false }) => {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 const OrderTable = ({ orders, showUrgency = false }) => {
+  const [zoomItems, setZoomItems] = useState(null);
+
   if (!orders || orders.length === 0) {
     return (
       <div className="orders-empty">
@@ -260,12 +295,11 @@ const OrderTable = ({ orders, showUrgency = false }) => {
               <th>ID ORDEN</th>
               <th>TOTAL</th>
               <th>PRODUCTOS</th>
-              <th>ESTADO ML</th>
+              <th className="th-collapsible">ESTADO ML</th>
               <th>ENVÍO</th>
-              {/* Columna urgencia — aparece dinámicamente */}
               {showUrgency && <th className="th-urgency">URGENCIA</th>}
               <th>PICKING</th>
-              <th>FECHA</th>
+              <th className="th-collapsible">FECHA</th>
               <th>ETIQUETA</th>
             </tr>
           </thead>
@@ -276,6 +310,7 @@ const OrderTable = ({ orders, showUrgency = false }) => {
                 order={order}
                 index={i}
                 showUrgency={showUrgency}
+                onZoomItems={setZoomItems}
               />
             ))}
           </tbody>
@@ -290,9 +325,15 @@ const OrderTable = ({ orders, showUrgency = false }) => {
             order={order}
             index={i}
             showUrgency={showUrgency}
+            onZoomItems={setZoomItems}
           />
         ))}
       </div>
+
+      {/* Product lightbox */}
+      {zoomItems && (
+        <ProductLightbox items={zoomItems} onClose={() => setZoomItems(null)} />
+      )}
     </>
   );
 };

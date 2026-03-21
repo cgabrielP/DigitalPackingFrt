@@ -33,11 +33,22 @@ const formatDateLabel = (iso) =>
   });
 
 /* ── Toast ── */
-const Toast = ({ toast }) => {
+const Toast = ({ toast, onDismiss }) => {
   if (!toast) return null;
   return (
-    <div className={`adl-toast adl-toast--${toast.type}`}>
-      {toast.type === "success" ? "✓" : "✗"} {toast.msg}
+    <div className={`adl-toast adl-toast--${toast.type} ${toast.fading ? "adl-toast--out" : ""}`}>
+      <div className="adl-toast-main">
+        <span className="adl-toast-icon">{toast.type === "success" ? "✓" : "✗"}</span>
+        <span className="adl-toast-msg">{toast.msg}</span>
+        <button className="adl-toast-close" onClick={onDismiss}>×</button>
+      </div>
+      {toast.details && toast.details.length > 0 && (
+        <div className="adl-toast-details">
+          {toast.details.map((d, i) => (
+            <div key={i} className="adl-toast-detail-row">{d}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -213,9 +224,20 @@ export default function AssignDelivery() {
     }
   };
 
-  const showToast = (type, msg) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 3500);
+  const toastTimer = useRef(null);
+  const showToast = (type, msg, details = null) => {
+    clearTimeout(toastTimer.current);
+    setToast({ type, msg, details, fading: false });
+    const duration = details ? 8000 : 3500;
+    toastTimer.current = setTimeout(() => {
+      setToast((prev) => prev ? { ...prev, fading: true } : null);
+      setTimeout(() => setToast(null), 300);
+    }, duration);
+  };
+  const dismissToast = () => {
+    clearTimeout(toastTimer.current);
+    setToast((prev) => prev ? { ...prev, fading: true } : null);
+    setTimeout(() => setToast(null), 300);
   };
 
   /* ── Navegación de días ── */
@@ -338,9 +360,10 @@ export default function AssignDelivery() {
 
         if (!match) throw new Error("Orden no encontrada");
 
-        if (assignedOrderIds.has(match.id)) {
-          throw new Error("Esta orden ya tiene un delivery asignado");
-        }
+        // Check if already assigned (either today or any day via order data)
+        const currentAssignment = assignments.find((a) => a.orderId === match.id);
+        const orderAssignment = match.deliveryAssignment;
+        const existingAssignee = currentAssignment?.deliveryUser ?? orderAssignment?.deliveryUser;
 
         // ← acumular en lista, no reemplazar
         setPendingOrders((prev) => {
@@ -348,10 +371,15 @@ export default function AssignDelivery() {
             setScanError("Esta orden ya está en la lista");
             return prev;
           }
-          return [...prev, match];
+          return [...prev, { ...match, reassignFrom: existingAssignee || null }];
         });
 
-        if (match.pickingStatus !== "packed") {
+        if (existingAssignee) {
+          const assigneeName = existingAssignee.name || "otro delivery";
+          setScanWarning(
+            `La orden #${match.packId ?? match.id} está asignada a ${assigneeName}. Se reasignará al confirmar.`
+          );
+        } else if (match.pickingStatus !== "packed") {
           setScanWarning(
             `La orden #${match.packId ?? match.id} tiene estado "${
               match.pickingStatus
@@ -367,7 +395,7 @@ export default function AssignDelivery() {
         setTimeout(() => inputRef.current?.focus(), 50);
       }
     },
-    [orders, assignedOrderIds]
+    [orders, assignedOrderIds, assignments]
   );
 
   useEffect(() => {
@@ -416,6 +444,7 @@ export default function AssignDelivery() {
     setScanError(null);
     setCode("");
 
+    const assigned = total - errors.length;
     if (errors.length === 0) {
       showToast(
         "success",
@@ -425,10 +454,11 @@ export default function AssignDelivery() {
       );
       setTab("assigned");
     } else {
-      setBulkDone({ assigned: total - errors.length, errors });
+      setBulkDone({ assigned, errors });
       showToast(
         "error",
-        `${errors.length} orden${errors.length !== 1 ? "es" : ""} con error`
+        `${assigned > 0 ? `✓ ${assigned} asignada${assigned !== 1 ? "s" : ""} — ` : ""}✗ ${errors.length} orden${errors.length !== 1 ? "es" : ""} con error`,
+        errors
       );
     }
   };
@@ -577,7 +607,7 @@ export default function AssignDelivery() {
 
           <p className="adl-date-label">{formatDateLabel(date)}</p>
 
-          <Toast toast={toast} />
+          <Toast toast={toast} onDismiss={dismissToast} />
 
           {/* ── Stats ── */}
           <div className="adl-stats">
@@ -1335,7 +1365,12 @@ export default function AssignDelivery() {
                           <span className="adl-pending-buyer">
                             {o.buyerNickname ?? o.buyerName ?? "—"}
                           </span>
-                          {o.pickingStatus !== "packed" && (
+                          {o.reassignFrom && (
+                            <span className="adl-pending-reassign">
+                              ↻ Reasignar de {o.reassignFrom.name || "otro"}
+                            </span>
+                          )}
+                          {!o.reassignFrom && o.pickingStatus !== "packed" && (
                             <span className="adl-pending-warn">
                               ⚠ {o.pickingStatus}
                             </span>
@@ -1397,21 +1432,7 @@ export default function AssignDelivery() {
                 </div>
               )}
 
-              {/* Errores parciales post-confirmación */}
-              {bulkDone && bulkDone.errors.length > 0 && (
-                <div className="adl-modal-error">
-                  <strong>
-                    ✓ {bulkDone.assigned} asignada
-                    {bulkDone.assigned !== 1 ? "s" : ""} — ✗{" "}
-                    {bulkDone.errors.length} con error:
-                  </strong>
-                  {bulkDone.errors.map((e, i) => (
-                    <div key={i} style={{ marginTop: 4 }}>
-                      {e}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Errores parciales post-confirmación — ahora se muestran en el toast */}
             </div>
           ) : /* ══════════════════════════════
                TAB: ASIGNADAS — sin cambios
