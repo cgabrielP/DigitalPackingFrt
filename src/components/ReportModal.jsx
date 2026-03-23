@@ -67,7 +67,7 @@ export default function ReportModal({ onClose, onGenerate }) {
   const handleGenerate = async () => {
     setGenerating(true)
     try {
-      onGenerate(period)
+      await onGenerate(period)
     } finally {
       setGenerating(false)
     }

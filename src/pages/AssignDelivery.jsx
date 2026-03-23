@@ -479,22 +479,66 @@ export default function AssignDelivery() {
     }
   };
 
-  const handleGenerateReport = (period) => {
-    const result = generateDeliveryReport({
-      assignments: filteredAssignments,
-      period,
-      deliveryName: selectedDeliveryName,
-      cityFilter,
-      search,
-    });
-    setReportModal(false);
-    if (!result.ok) {
-      showToast(
-        "error",
-        "Sin asignaciones en este período con los filtros activos"
-      );
+  const handleGenerateReport = async (period) => {
+    const now = new Date();
+    let rangeStart, rangeEnd;
+
+    if (period === "day") {
+      rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      rangeEnd = new Date(rangeStart);
+    } else if (period === "week") {
+      const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
+      rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow);
+      rangeEnd = new Date(rangeStart.getTime() + 6 * 86_400_000);
     } else {
-      showToast("success", `Reporte generado · ${result.count} asignaciones`);
+      rangeStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      rangeEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (rangeEnd > today) rangeEnd = today;
+
+    const dates = [];
+    const cursor = new Date(rangeStart);
+    while (cursor <= rangeEnd) {
+      dates.push(cursor.toISOString().split("T")[0]);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    try {
+      const results = await Promise.all(
+        dates.map((dateStr) =>
+          apiFetch(`${API_URL}/delivery/assignments?date=${dateStr}`, {
+            headers: getHeaders(),
+          })
+            .then((r) => r.json())
+            .catch(() => [])
+        )
+      );
+
+      let allAssignments = results.flat().filter((a) => a && a.id);
+
+      if (deliveryFilter !== "all") {
+        allAssignments = allAssignments.filter(
+          (a) => a.deliveryUser?.id === deliveryFilter
+        );
+      }
+
+      const result = generateDeliveryReport({
+        assignments: allAssignments,
+        period,
+        deliveryName: selectedDeliveryName,
+      });
+
+      setReportModal(false);
+      if (!result.ok) {
+        showToast("error", "Sin asignaciones en este período");
+      } else {
+        showToast("success", `Reporte generado · ${result.count} asignaciones`);
+      }
+    } catch {
+      setReportModal(false);
+      showToast("error", "Error generando el reporte");
     }
   };
 

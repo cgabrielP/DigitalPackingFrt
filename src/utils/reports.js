@@ -89,27 +89,19 @@ export const generateDeliveryReport = ({
   assignments,
   period,
   deliveryName = null,
-  cityFilter   = 'all',
-  search       = '',
 }) => {
   const now = new Date()
-  const { rangeStart, rangeEnd, periodLabel } = buildDateRange(period)
+  const { periodLabel } = buildDateRange(period)
 
-  // ── Filtrar por rango ──────────────────────────────────────────────────────
-  const inRange = assignments.filter(a => {
-    const d = new Date(a.assignedAt)
-    return d >= rangeStart && d <= rangeEnd
-  })
-
-  if (inRange.length === 0) return { ok: false, count: 0 }
+  if (!assignments.length) return { ok: false, count: 0 }
 
   // ── Métricas ───────────────────────────────────────────────────────────────
-  const totalAsignadas  = inRange.length
-  const totalEntregadas = inRange.filter(a => a.order?.shippingStatus === 'delivered').length
-  const totalEnTransito = inRange.filter(a => a.order?.shippingStatus === 'shipped').length
+  const totalAsignadas  = assignments.length
+  const totalEntregadas = assignments.filter(a => a.order?.shippingStatus === 'delivered').length
+  const totalEnTransito = assignments.filter(a => a.order?.shippingStatus === 'shipped').length
 
   // Total a pagar: solo entregadas y no canceladas — misma lógica que la UI
-  const totalAPagar = inRange
+  const totalAPagar = assignments
     .filter(a =>
       a.order?.shippingStatus === 'delivered' &&
       a.order?.status !== 'cancelled'
@@ -141,16 +133,10 @@ export const generateDeliveryReport = ({
   doc.setFontSize(7)
   doc.text(genStr, pageW - 10, 18, { align: 'right' })
 
-  const activeFiltersDesc = [
-    deliveryName         && `Delivery: ${deliveryName}`,
-    cityFilter !== 'all' && `Ciudad: ${cityFilter}`,
-    search               && `Búsqueda: "${search}"`,
-  ].filter(Boolean)
-
-  if (activeFiltersDesc.length > 0) {
+  if (deliveryName) {
     doc.setTextColor(99, 102, 241)
     doc.setFontSize(7)
-    doc.text(`Filtros activos: ${activeFiltersDesc.join('  ·  ')}`, 10, 25)
+    doc.text(`Delivery: ${deliveryName}`, 10, 25)
   }
 
   // ── CARDS DE RESUMEN — 4 cards incluyendo TOTAL A PAGAR ───────────────────
@@ -181,14 +167,20 @@ export const generateDeliveryReport = ({
   })
 
   // ── TABLA ──────────────────────────────────────────────────────────────────
-  const rows = inRange.map(a => {
+  const fmtAssignedAt = (val) => {
+    if (!val) return '—'
+    const d = new Date(val)
+    if (isNaN(d)) return '—'
+    return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short', year: '2-digit' })
+  }
+
+  const rows = assignments.map(a => {
     const productos     = a.order?.orderItems
       ?.map(i => `${i.quantity}x ${i.title}`)
       .join('\n') || '—'
     const shippingKey   = a.order?.shippingStatus ?? ''
     const shippingLabel = SHIPPING_LABEL[shippingKey] ?? shippingKey?.toUpperCase() ?? '—'
 
-    // Solo mostrar pago si la orden fue efectivamente entregada y no cancelada
     const pago = (
       a.order?.shippingStatus === 'delivered' &&
       a.order?.status !== 'cancelled'
@@ -199,6 +191,7 @@ export const generateDeliveryReport = ({
       productos,
       a.order?.receiverCity ?? '—',
       a.deliveryUser?.name ?? '—',
+      fmtAssignedAt(a.assignedAt),
       shippingLabel,
       pago,
     ]
@@ -206,7 +199,7 @@ export const generateDeliveryReport = ({
 
   autoTable(doc, {
     startY: cardY + 23,
-    head:   [['ID ORDEN', 'PRODUCTOS', 'CIUDAD', 'DELIVERY', 'ESTADO ENVÍO', 'PAGO']],
+    head:   [['ID ORDEN', 'PRODUCTOS', 'CIUDAD', 'DELIVERY', 'FECHA ASIG.', 'ESTADO ENVÍO', 'PAGO']],
     body:   rows,
     headStyles: {
       fillColor:   [10, 15, 30],
@@ -225,21 +218,22 @@ export const generateDeliveryReport = ({
     },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     columnStyles: {
-      0: { cellWidth: 26, fontStyle: 'bold', textColor: [99, 102, 241] },
-      1: { cellWidth: 58 },
-      2: { cellWidth: 24 },
-      3: { cellWidth: 28 },
-      4: { cellWidth: 26 },
-      5: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
+      0: { cellWidth: 22, fontStyle: 'bold', textColor: [99, 102, 241] },
+      1: { cellWidth: 48 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 25 },
+      4: { cellWidth: 22 },
+      5: { cellWidth: 24 },
+      6: { cellWidth: 21, halign: 'right', fontStyle: 'bold' },
     },
     didParseCell: (data) => {
       if (data.section === 'body') {
-        if (data.column.index === 4) {
+        if (data.column.index === 5) {
           const color = SHIPPING_COLOR[data.cell.raw]
           if (color) data.cell.styles.textColor = color
           data.cell.styles.fontStyle = 'bold'
         }
-        if (data.column.index === 5 && data.cell.raw !== '—') {
+        if (data.column.index === 6 && data.cell.raw !== '—') {
           data.cell.styles.textColor = [5, 150, 105]
         }
       }
@@ -299,5 +293,5 @@ export const generateDeliveryReport = ({
   const fileName = `reporte-delivery-${period}-${now.toISOString().split('T')[0]}.pdf`
   doc.save(fileName)
 
-  return { ok: true, count: inRange.length }
+  return { ok: true, count: assignments.length }
 }
