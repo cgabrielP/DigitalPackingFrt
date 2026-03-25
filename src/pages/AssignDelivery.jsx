@@ -479,7 +479,7 @@ export default function AssignDelivery() {
     }
   };
 
-  const handleGenerateReport = async (period) => {
+  const handleGenerateReport = async (period, weekOffset = 0) => {
     const now = new Date();
     let rangeStart, rangeEnd;
 
@@ -488,7 +488,7 @@ export default function AssignDelivery() {
       rangeEnd = new Date(rangeStart);
     } else if (period === "week") {
       const dow = now.getDay() === 0 ? 6 : now.getDay() - 1;
-      rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow);
+      rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow + weekOffset * 7);
       rangeEnd = new Date(rangeStart.getTime() + 6 * 86_400_000);
     } else {
       rangeStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -527,6 +527,7 @@ export default function AssignDelivery() {
       const result = generateDeliveryReport({
         assignments: allAssignments,
         period,
+        weekOffset,
         deliveryName: selectedDeliveryName,
       });
 

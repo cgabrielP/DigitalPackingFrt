@@ -2,17 +2,33 @@ import { useState } from 'react'
 import './ReportModal.css'
 
 // ─────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────
+
+const fmt = (d) => d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
+
+/** Calcula lunes–domingo de la semana actual + offset (0 = esta semana, -1 = anterior, …) */
+const getWeekRange = (offset = 0) => {
+  const now = new Date()
+  const dow = now.getDay() === 0 ? 6 : now.getDay() - 1
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow + offset * 7)
+  const weekEnd   = new Date(weekStart.getTime() + 6 * 86_400_000)
+  return { weekStart, weekEnd }
+}
+
+// ─────────────────────────────────────────
 //  OPCIONES DE PERÍODO
 // ─────────────────────────────────────────
 
-const buildPeriods = () => {
+const buildPeriods = (weekOffset) => {
   const now = new Date()
+  const { weekStart, weekEnd } = getWeekRange(weekOffset)
 
-  const dow       = now.getDay() === 0 ? 6 : now.getDay() - 1
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow)
-  const weekEnd   = new Date(weekStart.getTime() + 6 * 86_400_000)
-
-  const fmt = (d) => d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' })
+  const weekLabel = weekOffset === 0
+    ? 'ESTA SEMANA'
+    : weekOffset === -1
+      ? 'SEMANA PASADA'
+      : `SEMANA ${fmt(weekStart)}`
 
   return [
     {
@@ -29,7 +45,7 @@ const buildPeriods = () => {
     },
     {
       key:  'week',
-      label: 'ESTA SEMANA',
+      label: weekLabel,
       sub:   `${fmt(weekStart)} → ${fmt(weekEnd)}`,
       icon:  (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -60,14 +76,15 @@ const buildPeriods = () => {
 
 export default function ReportModal({ onClose, onGenerate }) {
   const [period,     setPeriod]     = useState('day')
+  const [weekOffset, setWeekOffset] = useState(0)
   const [generating, setGenerating] = useState(false)
 
-  const periods = buildPeriods()
+  const periods = buildPeriods(weekOffset)
 
   const handleGenerate = async () => {
     setGenerating(true)
     try {
-      await onGenerate(period)
+      await onGenerate(period, period === 'week' ? weekOffset : 0)
     } finally {
       setGenerating(false)
     }
@@ -127,6 +144,36 @@ export default function ReportModal({ onClose, onGenerate }) {
             </button>
           ))}
         </div>
+
+        {/* ── Navegación de semana ── */}
+        {period === 'week' && (
+          <div className="rm-week-nav">
+            <button
+              className="rm-week-nav-btn"
+              onClick={() => setWeekOffset(o => o - 1)}
+              title="Semana anterior"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <span className="rm-week-nav-label">
+              {fmt(getWeekRange(weekOffset).weekStart)} → {fmt(getWeekRange(weekOffset).weekEnd)}
+            </span>
+            <button
+              className="rm-week-nav-btn"
+              onClick={() => setWeekOffset(o => o + 1)}
+              disabled={weekOffset >= 0}
+              title="Semana siguiente"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* ── Acción ── */}
         <button

@@ -44,9 +44,10 @@ const fmtPeso = (n) =>
 /**
  * Calcula el rango de fechas según el período elegido.
  * @param {'day'|'week'|'month'} period
+ * @param {number} [weekOffset=0] - Desplazamiento de semana (0 = actual, -1 = anterior, …)
  * @returns {{ rangeStart: Date, rangeEnd: Date, periodLabel: string }}
  */
-export const buildDateRange = (period) => {
+export const buildDateRange = (period, weekOffset = 0) => {
   const now = new Date()
   let rangeStart, rangeEnd, periodLabel
 
@@ -57,7 +58,7 @@ export const buildDateRange = (period) => {
 
   } else if (period === 'week') {
     const dow  = now.getDay() === 0 ? 6 : now.getDay() - 1
-    rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow)
+    rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow + weekOffset * 7)
     rangeEnd   = new Date(rangeStart.getTime() + 7 * 86_400_000 - 1)
     periodLabel = `Semana ${fmt(rangeStart)} – ${fmt(rangeEnd)}`
 
@@ -88,10 +89,11 @@ export const buildDateRange = (period) => {
 export const generateDeliveryReport = ({
   assignments,
   period,
+  weekOffset = 0,
   deliveryName = null,
 }) => {
   const now = new Date()
-  const { periodLabel } = buildDateRange(period)
+  const { periodLabel } = buildDateRange(period, weekOffset)
 
   if (!assignments.length) return { ok: false, count: 0 }
 
