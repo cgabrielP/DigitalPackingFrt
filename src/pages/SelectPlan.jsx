@@ -43,8 +43,8 @@ export default function SelectPlan() {
   }, [])
 
   const waMsg = annual
-    ? `Hola, quiero activar el plan anual de DigitalPacking ($${fmt(PRICE_ANNUAL_TOTAL)}/año)`
-    : `Hola, quiero activar el plan mensual de DigitalPacking ($${fmt(PRICE_MONTHLY)}/mes)`
+    ? `Hola, quiero activar el plan anual de PAKKU ($${fmt(PRICE_ANNUAL_TOTAL)}/año)`
+    : `Hola, quiero activar el plan mensual de PAKKU ($${fmt(PRICE_MONTHLY)}/mes)`
 
   const waUrl = `https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${encodeURIComponent(waMsg)}`
 
@@ -63,7 +63,7 @@ export default function SelectPlan() {
             </svg>
           </div>
           <div>
-            <p className="sp-brand-name">DIGITALPACKING</p>
+            <p className="sp-brand-name">PAKKU</p>
             <p className="sp-brand-sub">SISTEMA DE EMPAQUE</p>
           </div>
         </div>

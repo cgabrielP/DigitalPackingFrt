@@ -89,7 +89,7 @@ export default function Register() {
             </svg>
           </div>
           <div>
-            <p className="reg-brand-name">DIGITALPACKING</p>
+            <p className="reg-brand-name">PAKKU</p>
             <p className="reg-brand-sub">SISTEMA DE EMPAQUE</p>
           </div>
         </div>

@@ -86,7 +86,7 @@ export default function Login() {
             </svg>
           </div>
           <div>
-            <p className="login-brand-name">DIGITALPACKING</p>
+            <p className="login-brand-name">PAKKU</p>
             <p className="login-brand-sub">SISTEMA DE EMPAQUE</p>
           </div>
         </div>

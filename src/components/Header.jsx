@@ -239,7 +239,7 @@ export default function Header({
           }}
           onClick={() => navigate("/orders")}
         >
-          <span className="app-logo">PICKING</span>
+          <span className="app-logo">Pakku</span>
           <span className="app-logo-dot">●</span>
           <span className="app-logo-sub">{subtitle}</span>
         </div>
