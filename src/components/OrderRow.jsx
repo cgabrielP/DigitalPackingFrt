@@ -1,4 +1,5 @@
 import { useState } from "react";
+import MarketplaceBadge from "./MarketplaceBadge";
 import "./OrderRow.css";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
@@ -133,7 +134,10 @@ const OrderRow = ({ order, index, showUrgency = false, onZoomItems }) => {
         title={`Click para copiar: ${order.displayIdentifier}`}
         onClick={() => navigator.clipboard?.writeText(String(order.displayIdentifier))}
       >
-        <span className="td-id__full">#{order.displayIdentifier}</span>
+        <span className="td-id__full">
+          {order.marketplace && <MarketplaceBadge marketplace={order.marketplace} />}{" "}
+          #{order.displayIdentifier}
+        </span>
       </td>
 
       <td className="td-amount">

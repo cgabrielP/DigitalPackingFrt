@@ -6,6 +6,7 @@ import OrderRow, {
   SHIPPING_CATEGORY,
   formatDate,
 } from "./OrderRow";
+import MarketplaceBadge from "./MarketplaceBadge";
 import "./OrderTable.css";
 
 // ─── Product zoom lightbox ──────────────────────────────────────────────────
@@ -85,7 +86,10 @@ const OrderCard = ({ order, index, showUrgency = false, onZoomItems }) => {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <span className="ocard__id">#{order.displayIdentifier}</span>
+        <span className="ocard__id">
+          {order.marketplace && <MarketplaceBadge marketplace={order.marketplace} />}{" "}
+          #{order.displayIdentifier}
+        </span>
         <span className="ocard__buyer">{order.buyerNickname || "—"}</span>
         <span className="ocard__total">
           ${order.totalAmount?.toLocaleString("es-CL")}

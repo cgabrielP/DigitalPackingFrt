@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import MarketplaceBadge from './MarketplaceBadge'
 import './OrderCard.css'
 
 const BADGE_CLS   = { pending: 'pending', scanned: 'scanned', packed: 'packed' }
@@ -206,7 +207,10 @@ const OrderCard = ({ order, packed, onPack }) => {
         {/* Header */}
         <div className="order-card-header">
           <div>
-            <p className="order-card-id">#{order.displayIdentifier}</p>
+            <p className="order-card-id">
+              {order.marketplace && <MarketplaceBadge marketplace={order.marketplace} />}{" "}
+              #{order.displayIdentifier}
+            </p>
             <p className="order-card-buyer">
               {order.buyerNickname || 'Comprador desconocido'}
             </p>

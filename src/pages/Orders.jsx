@@ -386,7 +386,7 @@ export default function Orders() {
           {/* ── Título ── */}
           <div className="orders-page-title">
             <h1>ÓRDENES</h1>
-            <p>{activeOrders.length} órdenes activas · Mercado Libre</p>
+            <p>{activeOrders.length} órdenes activas</p>
           </div>
 
           {/* ══════════════════════════════════════

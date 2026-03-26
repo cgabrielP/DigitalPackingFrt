@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import MarketplaceBadge from './MarketplaceBadge'
 import './LogTable.css'
 
 const ROLE_COLOR = { ADMIN: 'amber', SUPERVISOR: 'purple', PICKER: 'blue', DELIVERY: 'green' }
@@ -52,7 +53,10 @@ const LogRow = ({ log }) => {
                         <div className="lt-detail">
                             <div className="lt-detail-item">
                                 <span className="lt-detail-label">ORDEN</span>
-                                <span className="lt-detail-value lt-mono">#{log.order.packId ?? log.order.id}</span>
+                                <span className="lt-detail-value lt-mono">
+                                    {log.order.marketplace && <MarketplaceBadge marketplace={log.order.marketplace} />}{" "}
+                                    #{log.order.packId ?? log.order.id}
+                                </span>
                             </div>
                             <div className="lt-detail-item">
                                 <span className="lt-detail-label">COMPRADOR</span>

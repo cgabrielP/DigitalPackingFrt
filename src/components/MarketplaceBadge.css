@@ -1,0 +1,74 @@
+.mp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Sizes */
+.mp-badge--sm {
+  font-size: 9px;
+  padding: 2px 5px;
+  line-height: 1;
+}
+.mp-badge--md {
+  font-size: 11px;
+  padding: 3px 7px;
+  line-height: 1.2;
+}
+
+/* Marketplace colors */
+.mp-ml {
+  background: #fff1cc;
+  color: #a16b00;
+}
+.mp-falabella {
+  background: #d4f5e0;
+  color: #0d6832;
+}
+.mp-ripley {
+  background: #e1d4f5;
+  color: #5b21b6;
+}
+.mp-walmart {
+  background: #cce5ff;
+  color: #0050a0;
+}
+.mp-hites {
+  background: #ffdad6;
+  color: #a8201a;
+}
+.mp-unknown {
+  background: var(--surface-2, #e5e7eb);
+  color: var(--text-2, #6b7280);
+}
+
+/* Dark theme */
+[data-theme="dark"] .mp-ml {
+  background: #4a3800;
+  color: #ffc933;
+}
+[data-theme="dark"] .mp-falabella {
+  background: #0a3d1f;
+  color: #5ee892;
+}
+[data-theme="dark"] .mp-ripley {
+  background: #2e1065;
+  color: #c4a8ff;
+}
+[data-theme="dark"] .mp-walmart {
+  background: #002952;
+  color: #6cb4ff;
+}
+[data-theme="dark"] .mp-hites {
+  background: #4a0e0a;
+  color: #ffa09a;
+}
+[data-theme="dark"] .mp-unknown {
+  background: #374151;
+  color: #9ca3af;
+}
