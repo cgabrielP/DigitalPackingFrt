@@ -289,7 +289,7 @@ export default function Sidebar({ pendingDeliveryCount = 0 }) {
 
               <NavItem
                 icon={<IconSettings />}
-                label="CUENTAS ML"
+                label="CUENTAS"
                 path="/settings"
                 color="amber"
                 collapsed={collapsed}

@@ -6,6 +6,7 @@ import "./Orders.css";
 import Layout from "../components/Layout";
 import { isCancelled, isFinished } from "./Orders";
 import { apiFetch } from "../utils/auth";
+import MarketplaceFilter from "../components/MarketplaceFilter";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -20,6 +21,7 @@ const HISTORY_FILTERS = [
   { key: "finished",  label: "FINALIZADAS", color: "#16a34a" },
 ];
 
+
 const formatShort = (date) => {
   if (!date) return "";
   return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short" });
@@ -29,6 +31,7 @@ export default function OrderHistory() {
   const [orders, setOrders]             = useState([]);
   const [loading, setLoading]           = useState(false);
   const [historyFilter, setHistoryFilter] = useState("all");
+  const [mpFilter, setMpFilter]         = useState("all");
   const [search, setSearch]             = useState("");
   const [toast, setToast]               = useState(null);
   const [dateRange, setDateRange]       = useState([null, null]);
@@ -106,12 +109,14 @@ export default function OrderHistory() {
       .filter((o) => {
         if (historyFilter === "cancelled" && !isCancelled(o)) return false;
         if (historyFilter === "finished"  && !isFinished(o))  return false;
+        if (mpFilter !== "all" && o.marketplace !== mpFilter) return false;
 
         const matchSearch =
           !search ||
           o.id?.toString().includes(search) ||
           o.displayIdentifier?.toString().includes(search) ||
-          o.buyerNickname?.toLowerCase().includes(search.toLowerCase());
+          o.buyerNickname?.toLowerCase().includes(search.toLowerCase()) ||
+          o.buyerName?.toLowerCase().includes(search.toLowerCase());
 
         let matchDate = true;
         if (startDate || endDate) {
@@ -131,7 +136,7 @@ export default function OrderHistory() {
         new Date(b.lastUpdatedAt ?? b.createdAt ?? 0) -
         new Date(a.lastUpdatedAt ?? a.createdAt ?? 0)
       );
-  }, [historialOrders, historyFilter, search, startDate, endDate]);
+  }, [historialOrders, historyFilter, mpFilter, search, startDate, endDate]);
 
   const dateLabel = useMemo(() => {
     if (!startDate && !endDate) return "FECHA";
@@ -139,10 +144,11 @@ export default function OrderHistory() {
     return `${formatShort(startDate)} → ${formatShort(endDate)}`;
   }, [startDate, endDate]);
 
-  const hasActiveFilters = historyFilter !== "all" || search || startDate || endDate;
+  const hasActiveFilters = historyFilter !== "all" || mpFilter !== "all" || search || startDate || endDate;
 
   const clearAll = () => {
     setHistoryFilter("all");
+    setMpFilter("all");
     setSearch("");
     setDateRange([null, null]);
   };
@@ -154,7 +160,7 @@ export default function OrderHistory() {
 
           <div className="orders-page-title">
             <h1>HISTORIAL</h1>
-            <p>{historialOrders.length} órdenes · canceladas y finalizadas · Mercado Libre</p>
+            <p>{historialOrders.length} órdenes · canceladas y finalizadas</p>
           </div>
 
           {/* ── Stats ── */}
@@ -203,6 +209,8 @@ export default function OrderHistory() {
               </div>
             </div>
 
+            <MarketplaceFilter value={mpFilter} onChange={setMpFilter} />
+
             <div className="orders-filter-group">
               <span className="filter-group-label">FECHA</span>
               <div className="orders-date-wrapper">
@@ -241,6 +249,11 @@ export default function OrderHistory() {
             <div className="orders-active-filters">
               <span className="active-filters-info">
                 {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+                {mpFilter !== "all" && (
+                  <span style={{ color: mpFilter === "MERCADOLIBRE" ? "#f59e0b" : "#16a34a", marginLeft: 6 }}>
+                    · {mpFilter === "MERCADOLIBRE" ? "Mercado Libre" : "Falabella"}
+                  </span>
+                )}
                 {(startDate || endDate) && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>· {dateLabel}</span>}
               </span>
               <button className="active-filters-clear" onClick={clearAll}>Limpiar filtros</button>

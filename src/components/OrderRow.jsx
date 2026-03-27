@@ -10,10 +10,32 @@ const openLabel = (order) => {
   window.open(`${API_URL}/orders/${id}/label?token=${token}`, "_blank");
 };
 
+// ML raw statuses
 export const STATUS_ML = {
   paid: { label: "PAGADO", cls: "paid" },
   confirmed: { label: "CONFIRMADO", cls: "confirmed" },
   cancelled: { label: "CANCELADO", cls: "cancelled" },
+};
+
+// Normalized statuses (marketplace-agnostic)
+const STATUS_NORMALIZED = {
+  PENDING:    { label: "PENDIENTE",   cls: "paid" },
+  PICKED:     { label: "RECOGIDO",    cls: "confirmed" },
+  PACKED:     { label: "EMPACADO",    cls: "confirmed" },
+  ASSIGNED:   { label: "ASIGNADO",    cls: "confirmed" },
+  IN_TRANSIT: { label: "EN TRÁNSITO", cls: "confirmed" },
+  DELIVERED:  { label: "ENTREGADO",   cls: "confirmed" },
+  CANCELLED:  { label: "CANCELADO",   cls: "cancelled" },
+  RETURNED:   { label: "DEVUELTO",    cls: "cancelled" },
+};
+
+export const resolveStatusBadge = (order) => {
+  // For non-ML marketplaces, use normalizedStatus
+  if (order.marketplace && order.marketplace !== "MERCADOLIBRE") {
+    return STATUS_NORMALIZED[order.normalizedStatus] || { label: order.normalizedStatus || "—", cls: "other" };
+  }
+  // ML: use raw status
+  return STATUS_ML[order.status] || { label: order.status?.toUpperCase() || "—", cls: "other" };
 };
 
 export const STATUS_PICKING = {
@@ -113,10 +135,7 @@ export const UrgencyBadge = ({ order }) => {
 
 // ── Row ───────────────────────────────────────────────────────────────────────
 const OrderRow = ({ order, index, showUrgency = false, onZoomItems }) => {
-  const mlStatus = STATUS_ML[order.status] || {
-    label: order.status?.toUpperCase() || "—",
-    cls: "other",
-  };
+  const mlStatus = resolveStatusBadge(order);
   const pickStatus = STATUS_PICKING[order.pickingStatus] || {
     label: order.pickingStatus,
     cls: "pending",
@@ -183,7 +202,7 @@ const OrderRow = ({ order, index, showUrgency = false, onZoomItems }) => {
         </div>
       </td>
 
-      {/* Estado ML — hidden on tablet */}
+      {/* Estado — hidden on tablet */}
       <td className="td-collapsible">
         <span className={`status-badge ${mlStatus.cls}`}>
           <span className="badge-dot" />

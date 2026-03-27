@@ -5,6 +5,7 @@ import OrderTable from "../components/OrderTable";
 import "./Orders.css";
 import Layout from "../components/Layout";
 import { apiFetch } from "../utils/auth";
+import MarketplaceFilter from "../components/MarketplaceFilter";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -52,11 +53,15 @@ const formatCutoffTime = (isoString) => {
 };
 
 export const isCancelled = (o) =>
+  o.normalizedStatus === "CANCELLED" ||
   o.status === "cancelled" ||
+  o.status === "canceled" ||
   o.shippingStatus === "cancelled" ||
   o.shippingSubstatus === "cancelled";
 
 export const isFinished = (o) =>
+  o.normalizedStatus === "DELIVERED" ||
+  o.normalizedStatus === "RETURNED" ||
   o.shippingCategory === "finalizados" ||
   o.shippingStatus === "delivered" ||
   o.shippingSubstatus === "delivered";
@@ -151,6 +156,7 @@ export default function Orders() {
   const [shippingFilter, setShippingFilter] = useState("por_despachar");
   const [urgencyTab, setUrgencyTab]         = useState("today"); // tab activo
   const [cityFilter, setCityFilter]         = useState("all");
+  const [mpFilter, setMpFilter]             = useState("all");
   const [search, setSearch]                 = useState("");
   const [toast, setToast]                   = useState(null);
   const [dateRange, setDateRange]           = useState([null, null]);
@@ -322,11 +328,13 @@ export default function Orders() {
         const matchShipping = shippingFilter === "all" || o.shippingCategory === shippingFilter;
         const matchUrgency  = !isPD || urgencyFilter === "all" || o.deliveryUrgency === urgencyFilter;
         const matchCity     = cityFilter === "all" || o.receiverCity === cityFilter;
+        const matchMp       = mpFilter === "all" || o.marketplace === mpFilter;
         const matchSearch   =
           !search ||
           o.id?.toString().includes(search) ||
           o.displayIdentifier?.toString().includes(search) ||
-          o.buyerNickname?.toLowerCase().includes(search.toLowerCase());
+          o.buyerNickname?.toLowerCase().includes(search.toLowerCase()) ||
+          o.buyerName?.toLowerCase().includes(search.toLowerCase());
 
         let matchDate = true;
         if (startDate || endDate) {
@@ -339,7 +347,7 @@ export default function Orders() {
             if (endDate && matchDate && orderDate > toDateOnly(endDate)) matchDate = false;
           }
         }
-        return matchStatus && matchShipping && matchUrgency && matchCity && matchSearch && matchDate;
+        return matchStatus && matchShipping && matchUrgency && matchCity && matchMp && matchSearch && matchDate;
       })
       .sort((a, b) => {
         if (isPD) {
@@ -355,7 +363,7 @@ export default function Orders() {
           new Date(a.lastUpdatedAt ?? a.createdAt ?? 0)
         );
       });
-  }, [activeOrders, statusFilter, shippingFilter, urgencyFilter, isPD, cityFilter, search, startDate, endDate]);
+  }, [activeOrders, statusFilter, shippingFilter, urgencyFilter, isPD, cityFilter, mpFilter, search, startDate, endDate]);
 
   const dateLabel = useMemo(() => {
     if (!startDate && !endDate) return "FECHA";
@@ -365,13 +373,14 @@ export default function Orders() {
 
   const hasActiveFilters =
     statusFilter !== "all" || urgencyTab !== "all" ||
-    cityFilter !== "all" || search || startDate || endDate;
+    cityFilter !== "all" || mpFilter !== "all" || search || startDate || endDate;
 
   const clearAll = () => {
     setStatusFilter("all");
     setShippingFilter("all");
     setUrgencyTab("all");
     setCityFilter("all");
+    setMpFilter("all");
     setSearch("");
     setDateRange([null, null]);
   };
@@ -476,6 +485,7 @@ export default function Orders() {
               {cityOptions.length > 1 && (
                 <CityDropdown value={cityFilter} options={cityOptions} onChange={setCityFilter}/>
               )}
+              <MarketplaceFilter value={mpFilter} onChange={setMpFilter} />
 
               <div className="orders-date-wrapper">
                 <button ref={btnRef}
@@ -518,6 +528,11 @@ export default function Orders() {
                 {statusFilter !== "all" && (
                   <span style={{ color: statusFilter === "pending" ? "#f59e0b" : statusFilter === "scanned" ? "#3b82f6" : "#16a34a", marginLeft: 6 }}>
                     · {STATUS_FILTERS.find((f) => f.key === statusFilter)?.label}
+                  </span>
+                )}
+                {mpFilter !== "all" && (
+                  <span style={{ color: mpFilter === "MERCADOLIBRE" ? "#f59e0b" : "#16a34a", marginLeft: 6 }}>
+                    · {mpFilter === "MERCADOLIBRE" ? "Mercado Libre" : "Falabella"}
                   </span>
                 )}
                 {cityFilter !== "all" && (

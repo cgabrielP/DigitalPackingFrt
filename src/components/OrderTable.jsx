@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import OrderRow, {
   UrgencyBadge,
-  STATUS_ML,
+  resolveStatusBadge,
   STATUS_PICKING,
   SHIPPING_CATEGORY,
   formatDate,
@@ -65,10 +65,7 @@ const OrderCard = ({ order, index, showUrgency = false, onZoomItems }) => {
     order.shippingId &&
     !['shipped', 'delivered', 'not_delivered'].includes(order.shippingStatus) &&
     order.shippingSubstatus !== 'ready_to_print';
-  const mlStatus = STATUS_ML[order.status] || {
-    label: order.status?.toUpperCase() || "—",
-    cls: "other",
-  };
+  const mlStatus = resolveStatusBadge(order);
   const pickStatus = STATUS_PICKING[order.pickingStatus] || {
     label: order.pickingStatus ?? "—",
     cls: "pending",
@@ -162,10 +159,10 @@ const OrderCard = ({ order, index, showUrgency = false, onZoomItems }) => {
 
           {/* Detail grid */}
           <dl className="ocard__grid">
-            {/* Si no es vista urgency, mostrar estado ML */}
+            {/* Si no es vista urgency, mostrar estado */}
             {!showUrgency && (
               <div className="ocard__field">
-                <dt>ESTADO ML</dt>
+                <dt>ESTADO</dt>
                 <dd>
                   <span className={`status-badge ${mlStatus.cls}`}>
                     <span className="badge-dot" />
@@ -299,7 +296,7 @@ const OrderTable = ({ orders, showUrgency = false }) => {
               <th>ID ORDEN</th>
               <th>TOTAL</th>
               <th>PRODUCTOS</th>
-              <th className="th-collapsible">ESTADO ML</th>
+              <th className="th-collapsible">ESTADO</th>
               <th>ENVÍO</th>
               {showUrgency && <th className="th-urgency">URGENCIA</th>}
               <th>PICKING</th>
