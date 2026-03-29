@@ -5,6 +5,7 @@ const OPTIONS = [
   { key: "all",          label: "Todos" },
   { key: "MERCADOLIBRE", label: "Mercado Libre" },
   { key: "FALABELLA",    label: "Falabella" },
+  { key: "RIPLEY",       label: "Ripley" },
 ];
 
 const MarketplaceFilter = ({ value, onChange }) => {

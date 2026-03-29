@@ -39,6 +39,15 @@ const MARKETPLACES = [
       { name: "apiUrl", label: "API URL", placeholder: "https://sellercenter-api.falabella.com", defaultValue: "https://sellercenter-api.falabella.com" },
     ],
   },
+  {
+    key: "RIPLEY",
+    label: "Ripley",
+    type: "apikey",
+    fields: [
+      { name: "apiKey", label: "API Key", placeholder: "Tu API Key de Mirakl", secret: true },
+      { name: "shopId", label: "Shop ID (opcional)", placeholder: "ej: 1234" },
+    ],
+  },
 ];
 
 /* ── Alert ── */

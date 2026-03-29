@@ -531,8 +531,8 @@ export default function Orders() {
                   </span>
                 )}
                 {mpFilter !== "all" && (
-                  <span style={{ color: mpFilter === "MERCADOLIBRE" ? "#f59e0b" : "#16a34a", marginLeft: 6 }}>
-                    · {mpFilter === "MERCADOLIBRE" ? "Mercado Libre" : "Falabella"}
+                  <span style={{ color: mpFilter === "MERCADOLIBRE" ? "#f59e0b" : mpFilter === "RIPLEY" ? "#7c3aed" : "#16a34a", marginLeft: 6 }}>
+                    · {{ MERCADOLIBRE: "Mercado Libre", FALABELLA: "Falabella", RIPLEY: "Ripley" }[mpFilter] || mpFilter}
                   </span>
                 )}
                 {cityFilter !== "all" && (

@@ -250,8 +250,8 @@ export default function OrderHistory() {
               <span className="active-filters-info">
                 {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
                 {mpFilter !== "all" && (
-                  <span style={{ color: mpFilter === "MERCADOLIBRE" ? "#f59e0b" : "#16a34a", marginLeft: 6 }}>
-                    · {mpFilter === "MERCADOLIBRE" ? "Mercado Libre" : "Falabella"}
+                  <span style={{ color: mpFilter === "MERCADOLIBRE" ? "#f59e0b" : mpFilter === "RIPLEY" ? "#7c3aed" : "#16a34a", marginLeft: 6 }}>
+                    · {{ MERCADOLIBRE: "Mercado Libre", FALABELLA: "Falabella", RIPLEY: "Ripley" }[mpFilter] || mpFilter}
                   </span>
                 )}
                 {(startDate || endDate) && <span style={{ color: "#8b5cf6", marginLeft: 6 }}>· {dateLabel}</span>}
