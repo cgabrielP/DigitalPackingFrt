@@ -440,7 +440,6 @@ const handleSaveConfig = async () => {
                     <th>USUARIO</th>
                     <th>EMAIL</th>
                     <th>ROL</th>
-                    <th>ESTADO</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -467,16 +466,6 @@ const handleSaveConfig = async () => {
                           <span className={`ap-badge ap-badge--${color}`}>
                             {ROLES.find((r) => r.key === user.role)?.label ??
                               user.role}
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={`ap-badge ${user.isActive
-                              ? "ap-badge--green"
-                              : "ap-badge--muted"
-                              }`}
-                          >
-                            {user.isActive ? "ACTIVO" : "INACTIVO"}
                           </span>
                         </td>
                         <td>

@@ -115,7 +115,7 @@ export const UrgencyBadge = ({ order }) => {
       <Tooltip text={resolveNoPromiseReason(order)}>
         <span className={`urgency-badge ${cfg.cls}`}>
           <span className="urgency-badge__icon">{cfg.icon}</span>
-          {cfg.label}
+          <span className="urgency-badge__label">{cfg.label}</span>
           <span className="urgency-badge__help">?</span>
         </span>
       </Tooltip>
@@ -125,7 +125,7 @@ export const UrgencyBadge = ({ order }) => {
   return (
     <span className={`urgency-badge ${cfg.cls}`}>
       <span className="urgency-badge__icon">{cfg.icon}</span>
-      {cfg.label}
+      <span className="urgency-badge__label">{cfg.label}</span>
       {cutoff && urgency !== "upcoming" && (
         <span className="urgency-badge__cutoff">· {cutoff}</span>
       )}

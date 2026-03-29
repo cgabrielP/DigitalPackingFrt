@@ -164,6 +164,49 @@
 .status-badge.ship-transit { background: rgba(59,130,246,0.08); color: #3b82f6; border-color: #3b82f6; }
 .status-badge.ship-done    { background: rgba(22,163,74,0.08);  color: #16a34a; border-color: #16a34a; }
 
+/* ── Responsive urgency badge ────────────────────────── */
+/* Below 1024px: icon-only, expand on hover/tap          */
+@media (max-width: 1023px) {
+  .urgency-badge {
+    padding: 4px;
+    gap: 0;
+    cursor: pointer;
+    transition: gap 0.15s, padding 0.15s;
+  }
+
+  .urgency-badge__label,
+  .urgency-badge__cutoff,
+  .urgency-badge__help {
+    display: none;
+  }
+
+  .urgency-badge__icon {
+    font-size: 12px;
+  }
+
+  /* Expand on hover (desktop) and focus-within (tap) */
+  .urgency-badge:hover,
+  .urgency-badge:active {
+    padding: 3px 8px;
+    gap: 4px;
+  }
+
+  .urgency-badge:hover .urgency-badge__label,
+  .urgency-badge:active .urgency-badge__label {
+    display: inline;
+  }
+
+  .urgency-badge:hover .urgency-badge__cutoff,
+  .urgency-badge:active .urgency-badge__cutoff {
+    display: inline;
+  }
+
+  .urgency-badge.urg-none:hover .urgency-badge__help,
+  .urgency-badge.urg-none:active .urgency-badge__help {
+    display: inline-flex;
+  }
+}
+
 /* ── Método de envío en card ─────────────────────────── */
 .ocard__method {
   font-size: 11px;
